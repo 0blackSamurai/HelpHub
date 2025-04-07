@@ -1,0 +1,177 @@
+/* General styles */
+body {
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3 {
+    color: #ffffff; /* Light text for headings */
+}
+
+a {
+    text-decoration: none;
+    color: #1e90ff; /* Light blue links */
+}
+
+a:hover {
+    color: #00bfff; /* Brighter blue on hover */
+}
+
+button {
+    background-color: #1e1e1e; /* Dark button background */
+    color: #ffffff; /* Light button text */
+    border: 1px solid #ffffff; /* Light border */
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #333333; /* Slightly lighter on hover */
+}
+
+input, select {
+    background-color: #1e1e1e; /* Dark input background */
+    color: #ffffff; /* Light input text */
+    border: 1px solid #ffffff; /* Light border */
+    padding: 10px;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input::placeholder {
+    color: #aaaaaa; /* Light gray placeholder text */
+}
+
+form {
+    max-width: 400px;
+    margin: 20px auto;
+    background-color: #1e1e1e; /* Dark form background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+form h3 {
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    color: #ffffff;
+}
+
+form input {
+    margin-bottom: 15px;
+}
+
+form button {
+    width: 100%;
+    background-color: #1e90ff; /* Blue button */
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #00bfff; /* Brighter blue on hover */
+}
+
+/* Header styles */
+header {
+    background-color: #2c2c2c; /* Gray background for the top */
+    padding: 10px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+header nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+header nav ul li {
+    margin: 0 10px;
+}
+
+header nav ul li a {
+    color: #ffffff;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+header nav ul li a:hover {
+    background-color: #444444; /* Slightly lighter gray on hover */
+}
+
+/* Dashboard menu styles */
+.dashboard-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dashboard-menu a {
+    background-color: #1e1e1e; /* Dark background for menu links */
+    color: #ffffff; /* Light text */
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.dashboard-menu a:hover {
+    background-color: #333333; /* Slightly lighter on hover */
+}
+.gray {
+    background-color: #444444
+}
+.gray button:hover {
+    background-color:  #ff4d4d;
+}
+
+/* Logout button styles */
+.loggbox {
+    margin-top: 20px;
+}
+
+.loggout {
+    background-color: #ff4d4d; /* Red logout button */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.loggout:hover {
+    background-color: #ff6666; /* Lighter red on hover */
+}
+
+.logout-button {
+    background-color: #ff4d4d; /* Red logout button */
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.logout-button:hover {
+    background-color: #ff6666; /* Lighter red on hover */
+}

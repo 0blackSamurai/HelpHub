@@ -1,0 +1,104 @@
+<%- include('./partials/header') %>
+<body>
+    <h1>Admin Dashboard</h1>
+    <h2>All Tickets</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% tickets.forEach(ticket => { %>
+                <tr>
+                    <td><%= ticket.title %></td>
+                    <td><%= ticket.description %></td>
+                    <td><%= ticket.category %></td>
+                    <td><%= ticket.priority %></td>
+                    <td><%= ticket.status %></td>
+                    <td>
+                        <button onclick="openEditModal('<%= ticket._id %>', '<%= ticket.title %>', '<%= ticket.description %>', '<%= ticket.priority %>', '<%= ticket.status %>')">Edit</button>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <!-- Edit Modal -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); width: 400px;">
+        <form id="editForm">
+            <input type="hidden" name="ticketId" id="editTicketId">
+            <div>
+                <label for="editTitle">Title</label>
+                <input type="text" name="title" id="editTitle" required>
+            </div>
+            <div>
+                <label for="editDescription">Description</label>
+                <textarea name="description" id="editDescription" rows="4" required></textarea>
+            </div>
+            <div>
+                <label for="editPriority">Priority</label>
+                <select name="priority" id="editPriority" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div>
+                <label for="editStatus">Status</label>
+                <select name="status" id="editStatus" required>
+                    <option value="Åpen">Open</option>
+                    <option value="Under arbeid">In Progress</option>
+                    <option value="Løst">Finished</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+            <div>
+                <label for="userComment">User Comment</label>
+                <textarea name="userComment" id="userComment" rows="2"></textarea>
+            </div>
+            <div>
+                <label for="adminComment">Admin Comment</label>
+                <textarea name="adminComment" id="adminComment" rows="2"></textarea>
+            </div>
+            <button type="submit">Save Changes</button>
+            <button type="button" onclick="closeEditModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        function openEditModal(ticketId, title, description, priority, status) {
+            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editTicketId').value = ticketId;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editPriority').value = priority;
+            document.getElementById('editStatus').value = status;
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/tickets/edit', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Ticket updated successfully');
+                location.reload(); // Reload the page to reflect changes
+            } else {
+                alert('Error updating ticket');
+            }
+        });
+    </script>
+</body>
+</html>

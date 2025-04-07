@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fiks ferdig - Your daily to-do list app">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/main.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <% if (isAuthenticated) { %>
+                    <% if (isAdmin) { %>
+                        <li><a href="/dashboard">Admin Dashboard</a></li>
+                    <% } %>
+                    <li><a href="/profile">Profile</a></li>
+                    <li>
+                        <form action="/logout" class="loggbox" method="get">
+                            <button type="submit" class="gray">Logout</button>
+                        </form>
+                    </li>
+                <% } else { %>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
+                <% } %>
+            </ul>
+        </nav>
+    </header>
+    
+    <main id="main-content">

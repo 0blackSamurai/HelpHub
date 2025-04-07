@@ -1,0 +1,32 @@
+<%- include('./partials/header') %>
+<body>
+    
+    <div class="dashboard-menu">
+       
+        
+        <form action="/logout" class="loggbox" method="get">
+            <button type="submit" class="loggout">Logout</button>
+        </form>
+    </div>
+
+
+    <h1>Welcome to your Profile</h1>
+
+    <h2>Your Tickets</h2>
+    <ul>
+        <% tickets.forEach(ticket => { %>
+            <li>
+                <strong>Title:</strong> <%= ticket.title %><br>
+                <strong>Description:</strong> <%= ticket.description %><br>
+                <strong>Category:</strong> <%= ticket.category %><br>
+                <strong>Priority:</strong> <%= ticket.priority %><br>
+                <strong>Status:</strong> <%= ticket.status %>
+            </li>
+        <% }) %>
+    </ul>
+    <div>
+        <h2>Create Ticket</h2>
+        <a href="/tickets/create"><button>Create Ticket</button></a> <!-- Link to /tickets/create -->
+    </div>
+</body>
+</html>
