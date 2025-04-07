@@ -1,0 +1,107 @@
+<%- include('./partials/header') %>
+<body>
+    <div class="container error-container">
+        <div class="error-box">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            
+            <h1><%= title %></h1>
+            <p class="error-message"><%= message %></p>
+            
+            <% if (error && error.stack && process.env.NODE_ENV === 'development') { %>
+                <div class="error-details">
+                    <h3>Error Details:</h3>
+                    <pre><%= error.stack %></pre>
+                </div>
+            <% } %>
+            
+            <div class="error-actions">
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </a>
+                <a href="/" class="btn-home">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .error-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
+        
+        .error-box {
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .error-icon {
+            font-size: 5rem;
+            color: #f44336;
+            margin-bottom: 20px;
+        }
+        
+        .error-message {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 30px;
+        }
+        
+        .error-details {
+            background-color: #121212;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: left;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .error-details pre {
+            color: #f44336;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        
+        .error-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .btn-back, .btn-home {
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .btn-back {
+            background-color: #757575;
+            color: white;
+        }
+        
+        .btn-home {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-back:hover, .btn-home:hover {
+            transform: translateY(-3px);
+            opacity: 0.9;
+        }
+    </style>
+</body>
+</html>

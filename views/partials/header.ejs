@@ -8,6 +8,51 @@
     <link rel="stylesheet" href="/main.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Add some basic styling */
+        .message-receiver {
+            position: relative;
+            display: inline-block;
+            margin-left: 20px;
+        }
+        .message-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 0 5px;
+            font-size: 0.8rem;
+        }
+        .messages-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 250px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .message-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .btn-view {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
     
@@ -25,6 +70,19 @@
                             <button type="submit" class="gray">Logout</button>
                         </form>
                     </li>
+                    <li>
+                        <div class="message-receiver">
+                            <div class="message-icon" onclick="toggleMessages()">📩
+                                <span class="notification-badge" id="notification-count">0</span>
+                            </div>
+                            <div class="messages-dropdown" id="messages-dropdown">
+                                <h4>Messages</h4>
+                                <div id="messages-container">
+                                    <div class="message-item">No new messages</div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
                 <% } else { %>
                     <li><a href="/login">Login</a></li>
                     <li><a href="/register">Register</a></li>
@@ -34,3 +92,43 @@
     </header>
     
     <main id="main-content">
+    <script>
+        function toggleMessages() {
+            const dropdown = document.getElementById('messages-dropdown');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        // Check for new messages every 30 seconds
+        async function checkMessages() {
+            if (document.getElementById('notification-count')) {
+                try {
+                    const response = await fetch('/messages/unread');
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('notification-count').textContent = data.count;
+                        
+                        if (data.messages && data.messages.length > 0) {
+                            const container = document.getElementById('messages-container');
+                            container.innerHTML = '';
+                            
+                            data.messages.forEach(msg => {
+                                container.innerHTML += `
+                                <div class="message-item">
+                                    <p><strong>${msg.from}</strong>: ${msg.text}</p>
+                                    <small>${new Date(msg.date).toLocaleString()}</small>
+                                </div>`;
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking messages:', error);
+                }
+            }
+        }
+        
+        // Initial check
+        checkMessages();
+        
+        // Set interval for periodic checks
+        setInterval(checkMessages, 30000);
+    </script>

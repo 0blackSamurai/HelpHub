@@ -3,24 +3,49 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-    const { username, epost, passord, confirmpassord, role } = req.body;
-
-    if (passord !== confirmpassord) {
-        return res.send('Passwords do not match');
-    }
+    const { username, epost, passord, confirmpassord } = req.body;
 
     try {
+        // Validate input
+        if (!username || !epost || !passord || !confirmpassord) {
+            return res.status(400).send('All fields are required');
+        }
+
+        if (passord !== confirmpassord) {
+            return res.status(400).send('Passwords do not match');
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ 
+            $or: [{ epost }, { username }] 
+        });
+        
+        if (existingUser) {
+            return res.status(400).send('User with this email or username already exists');
+        }
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(passord, parseInt(process.env.SALTROUNDS));
 
+        // Create new user
         const newUser = new User({
-            username, // Save username
-            epost, // Save email
+            username,
+            epost,
             passord: hashedPassword,
-            role
+            role: 'User' // Default role
         });
 
         await newUser.save();
-        res.send('Registration successful');
+        
+        // Auto-login after registration
+        const token = jwt.sign(
+            { userId: newUser._id, role: newUser.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '48h' }
+        );
+        
+        res.cookie('user', token, { httpOnly: true });
+        res.redirect('/profile');
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).send('Error registering user');
@@ -30,49 +55,72 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { epost, passord } = req.body;
     
-    const user = await User.findOne({ epost });
+    try {
+        // Find user by email
+        const user = await User.findOne({ epost });
 
-    if (!user) {
-        return res.status(400).send('Bruker ikke funnet');
+        if (!user) {
+            return res.status(400).send('User not found');
+        }
+
+        // Compare password
+        const isMatch = await bcrypt.compare(passord, user.passord);
+
+        if (!isMatch) {
+            return res.status(400).send('Invalid password');
+        }
+
+        // Create and set token
+        const token = jwt.sign(
+            { userId: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '48h' }
+        );
+        
+        res.cookie('user', token, { httpOnly: true });
+        
+        // Redirect based on role
+        if (user.role === 'Admin') {
+            return res.redirect('/tickets/dashboard');
+        } else {
+            return res.redirect('/profile');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).send('An error occurred during login');
     }
-
-    const isMatch = await bcrypt.compare(passord, user.passord);
-
-    if (!isMatch) {
-        return res.status(400).send('Feil passord');
-    }
-
-    const token = jwt.sign(
-        { userId: user._id, role: user.role }, // Include role in the token
-        process.env.JWT_SECRET,
-        { expiresIn: '48h' }
-    );
-    res.cookie('user', token, { httpOnly: true }); // Ensure the cookie name matches
-    return res.status(200).redirect("/profile");
 };
 
 exports.logout = (req, res) => {
     try {
       res.clearCookie('user');
-      res.redirect("/login");
+      res.redirect('/login');
     } catch (error) {
       console.error("Logout error:", error);
-      res.status(500).send({ msg: "An error occurred during logout" });
+      res.status(500).send('An error occurred during logout');
     }
 };
 
 exports.renderRegisterPage = (req, res) => {
-    res.render("register", { title: "register"  });
+    // If already logged in, redirect to profile
+    if (res.locals.isAuthenticated) {
+        return res.redirect('/profile');
+    }
+    res.render('register', { title: 'Create Account' });
 };
 
 exports.renderLoginPage = (req, res) => {
-    res.render("login", { title: "login" });
+    // If already logged in, redirect to profile
+    if (res.locals.isAuthenticated) {
+        return res.redirect('/profile');
+    }
+    res.render('login', { title: 'Login' });
 };
 
 exports.renderDashboardPage = (req, res) => {
-    res.render("dashboard", { title: "profile" });
+    res.render('dashboard', { title: 'Admin Dashboard' });
 };
 
 exports.renderProfilePage = (req, res) => {
-    res.render("profile", { title: "Profile" });
+    res.render('profile', { title: 'Your Profile' });
 };

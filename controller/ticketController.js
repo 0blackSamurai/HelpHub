@@ -66,10 +66,19 @@ exports.renderCreateTicketPage = (req, res) => {
 };
 
 exports.editTicket = async (req, res) => {
+    console.log("Request Headers:", req.headers); // Debugging log
+    console.log("Request Body:", req.body); // Debugging log
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).send('Invalid request body'); // Handle empty body
+    }
+
     const { ticketId, title, description, priority, status, userComment, adminComment } = req.body;
+
     try {
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
+            console.error("Ticket not found with ID:", ticketId); // Debugging log
             return res.status(404).send('Ticket not found');
         }
 
@@ -87,9 +96,60 @@ exports.editTicket = async (req, res) => {
         }
 
         await ticket.save();
-        res.status(200).send('Ticket updated successfully'); // Send success response
+        console.log("Ticket updated successfully:", ticket); // Debugging log
+        res.status(200).send('Ticket updated successfully');
     } catch (error) {
-        console.error('Error editing ticket:', error);
+        console.error('Error editing ticket:', error); // Debugging log
         res.status(500).send('Error editing ticket');
+    }
+};
+
+exports.viewTicket = async (req, res) => {
+    try {
+        const ticketId = req.params.id;
+        const ticket = await Ticket.findById(ticketId).populate({
+            path: 'comments.userId',
+            select: 'username role' // Added role to the selection
+        });
+        
+        if (!ticket) {
+            return res.status(404).send('Ticket not found');
+        }
+        
+        res.render('ticketView', { 
+            title: 'View Ticket', 
+            ticket,
+            userId: req.user.userId 
+        });
+    } catch (error) {
+        console.error('Error viewing ticket:', error);
+        res.status(500).send('Error viewing ticket');
+    }
+};
+
+exports.addComment = async (req, res) => {
+    try {
+        const { ticketId, comment } = req.body;
+        
+        if (!comment || !ticketId) {
+            return res.status(400).send('Missing required fields');
+        }
+        
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).send('Ticket not found');
+        }
+        
+        ticket.comments.push({
+            userId: req.user.userId,
+            message: comment
+        });
+        
+        await ticket.save();
+        res.redirect(`/tickets/view/${ticketId}`);
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).send('Error adding comment');
     }
 };

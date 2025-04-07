@@ -1,0 +1,215 @@
+<%- include('./partials/header') %>
+<body>
+    <div class="container">
+        <h1>Ticket Details</h1>
+        
+        <div class="ticket-details">
+            <h2><%= ticket.title %></h2>
+            <p><strong>Description:</strong> <%= ticket.description %></p>
+            <p><strong>Category:</strong> <%= ticket.category %></p>
+            <p><strong>Priority:</strong> <span class="priority-badge <%= ticket.priority.toLowerCase() %>"><%= ticket.priority %></span></p>
+            <p><strong>Status:</strong> <span class="status-badge <%= ticket.status.toLowerCase().replace(/\s+/g, '-') %>"><%= ticket.status %></span></p>
+            <p><strong>Created:</strong> <%= new Date(ticket.createdAt).toLocaleString() %></p>
+        </div>
+        
+        <div class="comments-section">
+            <h3><i class="fas fa-comments"></i> Comments</h3>
+            <% if(ticket.comments && ticket.comments.length > 0) { %>
+                <div class="comments-list">
+                    <% ticket.comments.forEach(comment => { %>
+                        <div class="comment">
+                            <p class="comment-user">
+                                <strong>
+                                    <% if(comment.userId && comment.userId.role === 'Admin') { %>
+                                        <span class="badge admin-badge">Admin</span>
+                                    <% } else { %>
+                                        <span class="badge user-badge">User</span> <%= comment.userId && comment.userId.username ? comment.userId.username : '' %>
+                                    <% } %>
+                                </strong> 
+                                - <%= new Date(comment.createdAt || comment.timestamp).toLocaleString() %>
+                            </p>
+                            <p class="comment-message"><%= comment.message %></p>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p>No comments yet.</p>
+            <% } %>
+            
+            <div class="add-comment">
+                <h4>Add a Comment</h4>
+                <form id="commentForm" method="POST" action="/tickets/comment">
+                    <input type="hidden" name="ticketId" value="<%= ticket._id %>">
+                    <div>
+                        <textarea name="comment" rows="3" required placeholder="Type your comment here..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-comment"><i class="fas fa-paper-plane"></i> Add Comment</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <a href="<%= locals.userRole === 'Admin' ? '/tickets/dashboard' : '/profile' %>" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+            <% if(locals.userRole === 'Admin' || ticket.userId.toString() === locals.userId) { %>
+                <button onclick="openEditModal()" class="btn-edit"><i class="fas fa-edit"></i> Edit Ticket</button>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Edit Ticket</h3>
+            <form id="editForm" action="/tickets/edit" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="ticketId" id="editTicketId" value="<%= ticket._id %>">
+                <div>
+                    <label for="editTitle">Title</label>
+                    <input type="text" name="title" id="editTitle" required value="<%= ticket.title %>">
+                </div>
+                <div>
+                    <label for="editDescription">Description</label>
+                    <textarea name="description" id="editDescription" rows="4" required><%= ticket.description %></textarea>
+                </div>
+                <div>
+                    <label for="editPriority">Priority</label>
+                    <select name="priority" id="editPriority" required>
+                        <option value="Low" <%= ticket.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                        <option value="Medium" <%= ticket.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
+                        <option value="High" <%= ticket.priority === 'High' ? 'selected' : '' %>>High</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="editStatus">Status</label>
+                    <select name="status" id="editStatus" required>
+                        <option value="Åpen" <%= ticket.status === 'Åpen' ? 'selected' : '' %>>Open</option>
+                        <option value="Under arbeid" <%= ticket.status === 'Under arbeid' ? 'selected' : '' %>>In Progress</option>
+                        <option value="Løst" <%= ticket.status === 'Løst' ? 'selected' : '' %>>Finished</option>
+                        <option value="Closed" <%= ticket.status === 'Closed' ? 'selected' : '' %>>Closed</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeEditModal()" class="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openEditModal() {
+            document.getElementById('editModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/tickets/edit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    location.reload(); // Reload the page to see the changes
+                } else {
+                    const error = await response.text();
+                    alert('Error updating ticket: ' + error);
+                }
+            } catch (error) {
+                alert('Error updating ticket: ' + error.message);
+            }
+        });
+    </script>
+    
+    <style>
+        .priority-badge, .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .priority-badge.low {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .priority-badge.medium {
+            background-color: #FF9800;
+            color: white;
+        }
+        
+        .priority-badge.high {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .status-badge.åpen {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .status-badge.under-arbeid {
+            background-color: #FF9800;
+            color: white;
+        }
+        
+        .status-badge.løst {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .status-badge.closed {
+            background-color: #9E9E9E;
+            color: white;
+        }
+        
+        .btn-save {
+            background-color: #4CAF50;
+        }
+        
+        .btn-cancel {
+            background-color: #757575;
+        }
+        
+        .btn-comment {
+            background-color: #2196F3;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .admin-badge {
+            background-color: #E91E63;
+            color: white;
+        }
+        
+        .user-badge {
+            background-color: #2196F3;
+            color: white;
+        }
+    </style>
+</body>
+</html>

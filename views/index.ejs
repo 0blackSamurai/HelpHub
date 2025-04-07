@@ -1,10 +1,149 @@
 <%- include('./partials/header') %>
 <body>
-    <h1>Welcome to HelpHub</h1>
-    <p>Please choose an option:</p>
-    <div>
-        <a href="/login"><button>Login</button></a>
-        <a href="/register"><button>Create Account</button></a>
+    <div class="home-container">
+        <div class="hero-section">
+            <h1>Welcome to HelpHub</h1>
+            <p class="hero-text">The simple and efficient ticket management system for your support needs.</p>
+            
+            <div class="action-buttons">
+                <a href="/login" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="/register" class="btn-secondary"><i class="fas fa-user-plus"></i> Create Account</a>
+            </div>
+        </div>
+        
+        <div class="features-section">
+            <div class="feature">
+                <i class="fas fa-ticket-alt feature-icon"></i>
+                <h3>Issue Tracking</h3>
+                <p>Create, manage and track support tickets easily</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-comments feature-icon"></i>
+                <h3>Communication</h3>
+                <p>Comment on tickets to keep everyone updated</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-chart-line feature-icon"></i>
+                <h3>Status Updates</h3>
+                <p>Track progress from start to resolution</p>
+            </div>
+        </div>
     </div>
+    
+    <style>
+        .home-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .hero-text {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #333;
+            color: white;
+            border: 1px solid #666;
+        }
+        
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: translateY(-3px);
+        }
+        
+        .features-section {
+            display: flex;
+            justify-content: space-between;
+            padding: 60px 0;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            padding: 30px;
+            background-color: #1e1e1e;
+            margin: 10px;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .feature:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: #2196F3;
+            margin-bottom: 20px;
+        }
+        
+        .feature h3 {
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .feature p {
+            color: #aaa;
+        }
+        
+        @media (max-width: 768px) {
+            .features-section {
+                flex-direction: column;
+            }
+            
+            .feature {
+                margin: 10px 0;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn-primary, .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
 </body>
 </html>

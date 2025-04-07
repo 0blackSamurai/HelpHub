@@ -10,4 +10,8 @@ router.put('/update-status', isAuthenticated, isAdmin, ticketController.updateTi
 router.get('/dashboard', isAuthenticated, isAdmin, ticketController.getAllTicketsForAdmin);
 router.post('/edit', isAuthenticated, ticketController.editTicket);
 
+// New routes for viewing tickets and comments
+router.get('/view/:id', isAuthenticated, ticketController.viewTicket);
+router.post('/comment', isAuthenticated, ticketController.addComment);
+
 module.exports = router;
