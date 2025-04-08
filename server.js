@@ -11,6 +11,7 @@ const { setAuthStatus } = require('./middleware/authMiddleware');
 const authRoutes = require('./router/authRoutes');
 const userRoutes = require('./router/userRoutes');
 const ticketRoutes = require('./router/ticketRoutes');
+const messageRoutes = require('./router/messageRoutes'); // Add this line
 
 // Initialize app
 const app = express();
@@ -43,6 +44,7 @@ mongoose.connect(process.env.DB_URL)
 app.use('/', authRoutes);
 app.use('/', userRoutes);
 app.use('/tickets', ticketRoutes);
+app.use('/messages', messageRoutes); // Add this line
 
 // Error handling middleware
 app.use((err, req, res, next) => {

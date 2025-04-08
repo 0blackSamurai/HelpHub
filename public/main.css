@@ -374,6 +374,43 @@ tbody tr:hover {
     background-color: #ff6666; /* Lighter red on hover */
 }
 
+/* Improved Logout Button Styles */
+.logout-form {
+    margin: 0;
+    padding: 0;
+}
+
+.btn-logout {
+    background-color: #e53935;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-logout i {
+    font-size: 1rem;
+}
+
+.btn-logout:hover {
+    background-color: #c62828;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 /* Notification badge styles */
 .notification-badge {
     position: absolute;

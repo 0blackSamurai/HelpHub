@@ -33,24 +33,66 @@
             display: none;
             position: absolute;
             right: 0;
-            background-color: white;
-            min-width: 250px;
+            background-color: #2c2c2c;
+            min-width: 300px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
             border-radius: 5px;
             padding: 10px;
+            color: #eee;
         }
         .message-item {
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #444;
+            margin-bottom: 8px;
         }
-        .btn-view {
+        .message-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .message-content {
+            margin-bottom: 8px;
+        }
+        .message-time {
+            font-size: 0.8rem;
+            color: #aaa;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .message-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-view-message {
             background-color: #4CAF50;
             color: white;
             padding: 5px 10px;
             text-decoration: none;
             border-radius: 3px;
-            margin-left: 5px;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+        .mark-all-read {
+            font-size: 0.8rem;
+            color: #4da6ff;
+            cursor: pointer;
+        }
+        .mark-all-read:hover {
+            text-decoration: underline;
+        }
+        .empty-messages {
+            text-align: center;
+            padding: 15px 10px;
+            color: #888;
         }
     </style>
 </head>
@@ -66,19 +108,25 @@
                     <% } %>
                     <li><a href="/profile">Profile</a></li>
                     <li>
-                        <form action="/logout" class="loggbox" method="get">
-                            <button type="submit" class="gray">Logout</button>
+                        <form action="/logout" class="logout-form" method="get">
+                            <button type="submit" class="btn-logout">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
                         </form>
                     </li>
                     <li>
                         <div class="message-receiver">
-                            <div class="message-icon" onclick="toggleMessages()">📩
+                            <div class="message-icon" onclick="toggleMessages()">
+                                <i class="fas fa-bell"></i>
                                 <span class="notification-badge" id="notification-count">0</span>
                             </div>
                             <div class="messages-dropdown" id="messages-dropdown">
-                                <h4>Messages</h4>
+                                <div class="dropdown-header">
+                                    <h4>Notifications</h4>
+                                    <span class="mark-all-read" onclick="markAllMessagesAsRead()">Mark all as read</span>
+                                </div>
                                 <div id="messages-container">
-                                    <div class="message-item">No new messages</div>
+                                    <div class="empty-messages">No new notifications</div>
                                 </div>
                             </div>
                         </div>
@@ -96,9 +144,48 @@
         function toggleMessages() {
             const dropdown = document.getElementById('messages-dropdown');
             dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            
+            // If opened, refresh messages
+            if (dropdown.style.display === 'block') {
+                checkMessages();
+            }
         }
         
-        // Check for new messages every 30 seconds
+        // Mark a specific message as read
+        async function markMessageAsRead(messageId, ticketId) {
+            try {
+                await fetch(`/messages/read/${messageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                // Navigate to the ticket view
+                window.location.href = `/tickets/view/${ticketId}`;
+            } catch (error) {
+                console.error('Error marking message as read:', error);
+            }
+        }
+        
+        // Mark all messages as read
+        async function markAllMessagesAsRead() {
+            try {
+                await fetch('/messages/read-all', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                // Update UI
+                document.getElementById('notification-count').textContent = '0';
+                document.getElementById('messages-container').innerHTML = 
+                    '<div class="empty-messages">No new notifications</div>';
+            } catch (error) {
+                console.error('Error marking all messages as read:', error);
+            }
+        }
+        
+        // Check for new messages
         async function checkMessages() {
             if (document.getElementById('notification-count')) {
                 try {
@@ -107,15 +194,29 @@
                         const data = await response.json();
                         document.getElementById('notification-count').textContent = data.count;
                         
+                        const container = document.getElementById('messages-container');
+                        
+                        if (data.count === 0) {
+                            container.innerHTML = '<div class="empty-messages">No new notifications</div>';
+                            return;
+                        }
+                        
                         if (data.messages && data.messages.length > 0) {
-                            const container = document.getElementById('messages-container');
                             container.innerHTML = '';
                             
                             data.messages.forEach(msg => {
+                                const date = new Date(msg.date).toLocaleString();
                                 container.innerHTML += `
                                 <div class="message-item">
-                                    <p><strong>${msg.from}</strong>: ${msg.text}</p>
-                                    <small>${new Date(msg.date).toLocaleString()}</small>
+                                    <div class="message-content">${msg.text}</div>
+                                    <span class="message-time">${date}</span>
+                                    <div class="message-actions">
+                                        <a href="javascript:void(0)" 
+                                           onclick="markMessageAsRead('${msg.id}', '${msg.ticketId}')" 
+                                           class="btn-view-message">
+                                            <i class="fas fa-eye"></i> View Ticket
+                                        </a>
+                                    </div>
                                 </div>`;
                             });
                         }
@@ -127,8 +228,10 @@
         }
         
         // Initial check
-        checkMessages();
+        document.addEventListener('DOMContentLoaded', checkMessages);
         
         // Set interval for periodic checks
         setInterval(checkMessages, 30000);
     </script>
+</body>
+</html>

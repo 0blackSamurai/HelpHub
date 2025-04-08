@@ -1,4 +1,5 @@
 const Ticket = require('../models/ticketModel');
+const Message = require('../models/messageModel');
 
 exports.createTicket = async (req, res) => {
     const { title, description, category, priority } = req.body;
@@ -135,18 +136,33 @@ exports.addComment = async (req, res) => {
             return res.status(400).send('Missing required fields');
         }
         
-        const ticket = await Ticket.findById(ticketId);
+        const ticket = await Ticket.findById(ticketId).populate('userId', 'username');
         
         if (!ticket) {
             return res.status(404).send('Ticket not found');
         }
         
-        ticket.comments.push({
+        // Add the comment
+        const newComment = {
             userId: req.user.userId,
             message: comment
-        });
+        };
         
+        ticket.comments.push(newComment);
         await ticket.save();
+        
+        // Create notification if comment was not made by the ticket owner
+        if (ticket.userId._id.toString() !== req.user.userId) {
+            const message = new Message({
+                userId: ticket.userId._id,
+                ticketId: ticket._id,
+                commentId: ticket.comments[ticket.comments.length - 1]._id,
+                message: `New comment on your ticket: "${ticket.title}"`
+            });
+            
+            await message.save();
+        }
+        
         res.redirect(`/tickets/view/${ticketId}`);
     } catch (error) {
         console.error('Error adding comment:', error);
