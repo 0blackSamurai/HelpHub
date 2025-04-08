@@ -1,5 +1,6 @@
 const Ticket = require('../models/ticketModel');
 const Message = require('../models/messageModel');
+const User = require('../models/userModel'); // Add import for User model
 
 exports.createTicket = async (req, res) => {
     const { title, description, category, priority } = req.body;
@@ -12,7 +13,7 @@ exports.createTicket = async (req, res) => {
             priority // Save priority
         });
         await newTicket.save();
-        res.redirect('/dashboard'); // Redirect to dashboard after creating the ticket
+        res.redirect('/profile'); // Redirect to profile after creating the ticket
     } catch (error) {
         console.error('Error creating ticket:', error);
         res.status(500).send('Error creating ticket');
@@ -151,7 +152,7 @@ exports.addComment = async (req, res) => {
         ticket.comments.push(newComment);
         await ticket.save();
         
-        // Create notification if comment was not made by the ticket owner
+        // Create notification for ticket owner if comment was not made by the ticket owner
         if (ticket.userId._id.toString() !== req.user.userId) {
             const message = new Message({
                 userId: ticket.userId._id,
@@ -162,6 +163,34 @@ exports.addComment = async (req, res) => {
             
             await message.save();
         }
+        
+        // Create notifications for all admin users
+        const adminUsers = await User.find({ role: 'Admin' });
+        
+        // Create promises array for all admin notifications
+        const adminNotifications = adminUsers.map(async (admin) => {
+            // Skip if the admin is the one who made the comment
+            if (admin._id.toString() === req.user.userId) {
+                return;
+            }
+            
+            // Skip if the admin is the ticket owner (to avoid duplicate notifications)
+            if (admin._id.toString() === ticket.userId._id.toString()) {
+                return;
+            }
+            
+            const adminMessage = new Message({
+                userId: admin._id,
+                ticketId: ticket._id,
+                commentId: ticket.comments[ticket.comments.length - 1]._id,
+                message: `New comment by ${req.user.username || 'a user'} on ticket: "${ticket.title}"`
+            });
+            
+            return adminMessage.save();
+        });
+        
+        // Execute all admin notification saves
+        await Promise.all(adminNotifications.filter(Boolean));
         
         res.redirect(`/tickets/view/${ticketId}`);
     } catch (error) {

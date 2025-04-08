@@ -3,20 +3,35 @@
     <div class="container">
         <div class="dashboard-header">
             <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
-            <div class="filter-controls">
-                <select id="statusFilter" onchange="filterTickets()">
-                    <option value="all">All Statuses</option>
-                    <option value="Åpen">Open</option>
-                    <option value="Under arbeid">In Progress</option>
-                    <option value="Løst">Finished</option>
-                    <option value="Closed">Closed</option>
-                </select>
-                <select id="priorityFilter" onchange="filterTickets()">
-                    <option value="all">All Priorities</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                </select>
+            <div class="filter-section">
+                <button id="filterToggleBtn" class="filter-toggle-btn">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <div id="filterControlsContainer" class="filter-controls" style="display: none;">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search tickets..." onkeyup="filterTickets()">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <select id="statusFilter" onchange="filterTickets()">
+                        <option value="all">All Statuses</option>
+                        <option value="Åpen">Open</option>
+                        <option value="Under arbeid">In Progress</option>
+                        <option value="Løst">Finished</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                    <select id="priorityFilter" onchange="filterTickets()">
+                        <option value="all">All Priorities</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                    <select id="categoryFilter" onchange="filterTickets()">
+                        <option value="all">All Categories</option>
+                        <option value="Bug">Bug</option>
+                        <option value="Feature Request">Feature Request</option>
+                        <option value="Support">Support</option>
+                    </select>
+                </div>
             </div>
         </div>
         
@@ -55,6 +70,34 @@
             </div>
         </div>
         
+        <!-- New Priority Statistics Section -->
+        <div class="stats-section">
+            <h2><i class="fas fa-flag"></i> Priority Statistics</h2>
+            <div class="stats-container">
+                <div class="stat-card priority-low">
+                    <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-count" id="lowPriorityCount">0</span>
+                        <span class="stat-label">Low</span>
+                    </div>
+                </div>
+                <div class="stat-card priority-medium">
+                    <div class="stat-icon"><i class="fas fa-minus"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-count" id="mediumPriorityCount">0</span>
+                        <span class="stat-label">Medium</span>
+                    </div>
+                </div>
+                <div class="stat-card priority-high">
+                    <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-count" id="highPriorityCount">0</span>
+                        <span class="stat-label">High</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="ticket-section">
             <h2>All Tickets</h2>
             <div class="table-responsive">
@@ -63,6 +106,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
+                            <th>Created By</th>
                             <th>Category</th>
                             <th>Priority</th>
                             <th>Status</th>
@@ -71,9 +115,13 @@
                     </thead>
                     <tbody>
                         <% tickets.forEach(ticket => { %>
-                            <tr data-status="<%= ticket.status %>" data-priority="<%= ticket.priority %>">
+                            <tr data-status="<%= ticket.status %>" data-priority="<%= ticket.priority %>" data-category="<%= ticket.category %>" 
+                                data-title="<%= ticket.title.toLowerCase() %>" 
+                                data-description="<%= ticket.description.toLowerCase() %>"
+                                data-username="<%= ticket.userId.username.toLowerCase() %>">
                                 <td><%= ticket.title %></td>
                                 <td><%= ticket.description.length > 50 ? ticket.description.substring(0, 50) + '...' : ticket.description %></td>
+                                <td><%= ticket.userId.username %></td>
                                 <td><%= ticket.category %></td>
                                 <td>
                                     <span class="priority-badge <%= ticket.priority.toLowerCase() %>">
@@ -148,9 +196,22 @@
                 title: '<%= ticket.title %>',
                 description: '<%= ticket.description %>',
                 priority: '<%= ticket.priority %>',
-                status: '<%= ticket.status %>'
+                status: '<%= ticket.status %>',
+                username: '<%= ticket.userId.username %>'
             };
         <% }) %>
+        
+        // Filter toggle functionality
+        document.getElementById('filterToggleBtn').addEventListener('click', function() {
+            const filterContainer = document.getElementById('filterControlsContainer');
+            if (filterContainer.style.display === 'none') {
+                filterContainer.style.display = 'flex';
+                this.classList.add('active');
+            } else {
+                filterContainer.style.display = 'none';
+                this.classList.remove('active');
+            }
+        });
         
         function openEditModal(ticketId) {
             const ticket = ticketData[ticketId];
@@ -206,20 +267,41 @@
             let resolvedCount = 0;
             let closedCount = 0;
             
-            // Count tickets by status
+            // Priority counters
+            let lowPriorityCount = 0;
+            let mediumPriorityCount = 0;
+            let highPriorityCount = 0;
+            
+            // Count tickets by status and priority
             document.querySelectorAll('#ticketsTable tbody tr').forEach(row => {
-                const status = row.getAttribute('data-status');
-                if (status === 'Åpen') openCount++;
-                else if (status === 'Under arbeid') inProgressCount++;
-                else if (status === 'Løst') resolvedCount++;
-                else if (status === 'Closed') closedCount++;
+                // Only count visible rows (not filtered out)
+                if (row.style.display !== 'none') {
+                    const status = row.getAttribute('data-status');
+                    const priority = row.getAttribute('data-priority');
+                    
+                    // Count by status
+                    if (status === 'Åpen') openCount++;
+                    else if (status === 'Under arbeid') inProgressCount++;
+                    else if (status === 'Løst') resolvedCount++;
+                    else if (status === 'Closed') closedCount++;
+                    
+                    // Count by priority
+                    if (priority === 'Low') lowPriorityCount++;
+                    else if (priority === 'Medium') mediumPriorityCount++;
+                    else if (priority === 'High') highPriorityCount++;
+                }
             });
             
-            // Update the UI
+            // Update the status counts
             document.getElementById('openCount').textContent = openCount;
             document.getElementById('inProgressCount').textContent = inProgressCount;
             document.getElementById('resolvedCount').textContent = resolvedCount;
             document.getElementById('closedCount').textContent = closedCount;
+            
+            // Update the priority counts
+            document.getElementById('lowPriorityCount').textContent = lowPriorityCount;
+            document.getElementById('mediumPriorityCount').textContent = mediumPriorityCount;
+            document.getElementById('highPriorityCount').textContent = highPriorityCount;
         }
         
         // Call statistics update when page loads and after filtering
@@ -229,17 +311,30 @@
         function filterTickets() {
             const statusFilter = document.getElementById('statusFilter').value;
             const priorityFilter = document.getElementById('priorityFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
             const rows = document.querySelectorAll('#ticketsTable tbody tr');
             
             rows.forEach(row => {
                 const status = row.getAttribute('data-status');
                 const priority = row.getAttribute('data-priority');
+                const category = row.getAttribute('data-category');
+                const title = row.getAttribute('data-title');
+                const description = row.getAttribute('data-description');
+                const username = row.getAttribute('data-username');
                 
                 const statusMatch = statusFilter === 'all' || status === statusFilter;
                 const priorityMatch = priorityFilter === 'all' || priority === priorityFilter;
+                const categoryMatch = categoryFilter === 'all' || category === categoryFilter;
                 
-                if (statusMatch && priorityMatch) {
+                // New search functionality
+                const searchMatch = searchTerm === '' || 
+                    title.includes(searchTerm) || 
+                    description.includes(searchTerm) || 
+                    username.includes(searchTerm);
+                
+                if (statusMatch && priorityMatch && categoryMatch && searchMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -262,6 +357,8 @@
         .filter-controls {
             display: flex;
             gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
         .filter-controls select {
@@ -270,7 +367,7 @@
             background-color: #2c2c2c;
             border: 1px solid #444;
             color: #fff;
-            min-width: 150px;
+            min-width: 130px;
         }
         
         .ticket-section {
@@ -405,6 +502,76 @@
         .stat-label {
             color: #aaa;
             font-size: 0.9rem;
+        }
+        
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        #searchInput {
+            padding: 8px 12px 8px 35px;
+            border-radius: 5px;
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+            color: #fff;
+            width: 220px;
+            transition: width 0.3s ease;
+        }
+        
+        #searchInput:focus {
+            outline: none;
+            border-color: #4CAF50;
+            width: 250px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            color: #888;
+        }
+        
+        /* Priority stat card styles */
+        .stat-card.priority-low {
+            border-left: 5px solid #2196F3;
+        }
+        
+        .stat-card.priority-medium {
+            border-left: 5px solid #FF9800;
+        }
+        
+        .stat-card.priority-high {
+            border-left: 5px solid #F44336;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .filter-toggle-btn {
+            background-color: #2c2c2c;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-toggle-btn:hover, .filter-toggle-btn.active {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .filter-toggle-btn i {
+            font-size: 14px;
         }
     </style>
 </body>
