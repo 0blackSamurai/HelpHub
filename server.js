@@ -31,8 +31,13 @@ app.use(setAuthStatus); // Apply auth status middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Database connection
-mongoose.connect(process.env.DB_URL)
+// Database connection with additional options for stability
+mongoose.connect(process.env.DB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  socketTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 5000
+})
   .then(() => {
     console.log("✅ Database connection successful");
   })

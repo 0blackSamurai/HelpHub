@@ -37,6 +37,16 @@
                     <option value="Low">Low</option>
                 </select>
             </div>
+             
+            <div class="filter-group">
+                <label for="categoryFilter">Category:</label>
+                <select id="categoryFilter" onchange="filterTickets()">
+                    <option value="all">All</option>
+                    <option value="Bug">Bug</option>
+                    <option value="Feature Request">Feature Request</option>
+                    <option value="Support">Support</option>
+                </select>
+            </div>
             
             <div class="filter-group">
                 <label for="assignmentFilter">Assigned to:</label>
@@ -58,6 +68,7 @@
                         <th>Submitted by</th>
                         <th>Status</th>
                         <th>Priority</th>
+                        <th>Category</th>
                         <th>Assigned to</th>
                         <th>Created</th>
                         <th>Actions</th>
@@ -68,6 +79,7 @@
                         <tr data-ticket-id="<%= ticket._id %>"
                             data-status="<%= ticket.status %>"
                             data-priority="<%= ticket.priority %>"
+                            data-category="<%= ticket.category %>"
                             data-assigned="<%= ticket.assignedRole || 'unassigned' %>">
                             <td><%= ticket._id.toString().slice(-6) %></td>
                             <td><a href="/tickets/view/<%= ticket._id %>" class="ticket-title"><%= ticket.title %></a></td>
@@ -80,6 +92,11 @@
                             <td>
                                 <span class="priority-badge priority-<%= ticket.priority.toLowerCase() %>">
                                     <%= ticket.priority %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="category-badge category-<%= ticket.category.toLowerCase().replace(/\s+/g, '-') %>">
+                                    <%= ticket.category %>
                                 </span>
                             </td>
                             <td>
@@ -245,7 +262,7 @@
         font-weight: 500;
     }
     
-    .status-badge, .priority-badge, .assigned-badge, .unassigned-badge {
+    .status-badge, .priority-badge, .category-badge, .assigned-badge, .unassigned-badge {
         padding: 4px 8px;
         border-radius: 12px;
         font-size: 0.8rem;
@@ -284,6 +301,21 @@
     }
     
     .priority-low {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .category-bug {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .category-feature-request {
+        background-color: #ff9800;
+        color: white;
+    }
+    
+    .category-support {
         background-color: #4CAF50;
         color: white;
     }
@@ -454,6 +486,7 @@
     function filterTickets() {
         const statusFilter = document.getElementById('statusFilter').value;
         const priorityFilter = document.getElementById('priorityFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
         const assignmentFilter = document.getElementById('assignmentFilter').value;
         
         const rows = document.querySelectorAll('#ticketsTable tbody tr');
@@ -461,6 +494,7 @@
         rows.forEach(row => {
             const status = row.dataset.status;
             const priority = row.dataset.priority;
+            const category = row.dataset.category;
             const assigned = row.dataset.assigned;
             
             let showRow = true;
@@ -470,6 +504,10 @@
             }
             
             if (priorityFilter !== 'all' && priority !== priorityFilter) {
+                showRow = false;
+            }
+            
+            if (categoryFilter !== 'all' && category !== categoryFilter) {
                 showRow = false;
             }
             

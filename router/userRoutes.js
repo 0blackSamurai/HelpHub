@@ -13,6 +13,14 @@ router.get('/users', isAuthenticated, isAdmin, userController.getAllUsers);
 router.put('/users/role', isAuthenticated, isAdmin, userController.updateUserRole);
 router.get('/users/support-staff', isAuthenticated, isAdmin, userController.getSupportStaff);
 router.get('/user-management', isAuthenticated, isAdmin, userController.renderUserManagement);
-router.delete('/users/:userId', isAuthenticated, isAdmin, userController.deleteUser); // Add delete user route
+router.delete('/users/:userId', isAuthenticated, isAdmin, userController.deleteUser);
+
+// User manual/help routes
+router.get('/help', isAuthenticated, (req, res) => {
+    res.render('userManual', { 
+        title: 'User Manual',
+        userRole: req.user.role
+    });
+});
 
 module.exports = router;

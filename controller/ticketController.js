@@ -1,6 +1,7 @@
 const Ticket = require('../models/ticketModel');
 const Message = require('../models/messageModel');
-const User = require('../models/userModel'); // Add import for User model
+const User = require('../models/userModel'); // Fixed missing closing parenthesis
+const Feedback = require('../models/feedbackModel');
 
 exports.createTicket = async (req, res) => {
     const { title, description, category, priority } = req.body;
@@ -485,5 +486,158 @@ exports.updateAssignedTicket = async (req, res) => {
     } catch (error) {
         console.error('Error updating assigned ticket:', error);
         res.status(500).json({ error: 'Failed to update ticket' });
+    }
+};
+
+// Submit feedback for a resolved ticket
+exports.submitFeedback = async (req, res) => {
+    try {
+        const { ticketId, rating, comment } = req.body;
+        const userId = req.user.userId;
+        
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        // Make sure the ticket belongs to this user
+        if (ticket.userId.toString() !== userId) {
+            return res.status(403).json({ error: 'You can only provide feedback for your own tickets' });
+        }
+        
+        // Make sure the ticket is resolved or closed
+        if (ticket.status !== 'Løst' && ticket.status !== 'Closed') {
+            return res.status(400).json({ error: 'You can only provide feedback for resolved or closed tickets' });
+        }
+        
+        // Create or update feedback
+        await Feedback.findOneAndUpdate(
+            { ticketId, userId },
+            { rating, comment },
+            { upsert: true, new: true }
+        );
+        
+        // If the ticket is "Løst", automatically change it to "Closed" after feedback
+        if (ticket.status === 'Løst') {
+            ticket.status = 'Closed';
+            await ticket.save();
+            
+            // If there was a support staff assigned, notify them
+            if (ticket.assignedTo) {
+                const message = new Message({
+                    userId: ticket.assignedTo,
+                    ticketId: ticket._id,
+                    message: `Ticket "${ticket.title}" has been closed after receiving customer feedback.`
+                });
+                
+                await message.save();
+            }
+        }
+        
+        res.status(200).json({ message: 'Feedback submitted successfully' });
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        res.status(500).json({ error: 'Failed to submit feedback' });
+    }
+};
+
+// Check if user can provide feedback
+exports.checkFeedbackEligibility = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const userId = req.user.userId;
+        
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        // Check if user owns the ticket
+        if (ticket.userId.toString() !== userId) {
+            return res.status(200).json({ eligible: false });
+        }
+        
+        // Check if ticket is resolved or closed
+        if (ticket.status !== 'Løst' && ticket.status !== 'Closed') {
+            return res.status(200).json({ eligible: false });
+        }
+        
+        // Check if feedback already exists
+        const existingFeedback = await Feedback.findOne({ ticketId, userId });
+        
+        res.status(200).json({ 
+            eligible: ticket.status === 'Løst' || !existingFeedback,
+            hasFeedback: !!existingFeedback,
+            feedbackData: existingFeedback
+        });
+    } catch (error) {
+        console.error('Error checking feedback eligibility:', error);
+        res.status(500).json({ error: 'Failed to check feedback eligibility' });
+    }
+};
+
+// Get feedback statistics for support staff or admin
+exports.getFeedbackStats = async (req, res) => {
+    try {
+        // Get userId from params or set to null if not provided
+        const userId = req.params.userId || null;
+        
+        let match = {};
+        
+        // If userId is provided, get feedback for tickets assigned to that user
+        if (userId) {
+            // Get tickets assigned to this user
+            const tickets = await Ticket.find({ assignedTo: userId });
+            const ticketIds = tickets.map(ticket => ticket._id);
+            
+            match = { ticketId: { $in: ticketIds } };
+        }
+        
+        // Aggregate feedback statistics
+        const stats = await Feedback.aggregate([
+            { $match: match },
+            { 
+                $group: {
+                    _id: null,
+                    averageRating: { $avg: "$rating" },
+                    count: { $sum: 1 },
+                    ratings: {
+                        $push: "$rating"
+                    }
+                }
+            }
+        ]);
+        
+        if (stats.length === 0) {
+            return res.status(200).json({ 
+                averageRating: 0,
+                count: 0,
+                ratingCounts: {
+                    1: 0, 2: 0, 3: 0, 4: 0, 5: 0
+                }
+            });
+        }
+        
+        // Count occurrences of each rating
+        const ratingCounts = {
+            1: 0, 2: 0, 3: 0, 4: 0, 5: 0
+        };
+        
+        stats[0].ratings.forEach(rating => {
+            ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
+        });
+        
+        res.status(200).json({
+            averageRating: Math.round(stats[0].averageRating * 10) / 10, // round to 1 decimal place
+            count: stats[0].count,
+            ratingCounts
+        });
+    } catch (error) {
+        console.error('Error getting feedback stats:', error);
+        res.status(500).json({ error: 'Failed to get feedback statistics' });
     }
 };

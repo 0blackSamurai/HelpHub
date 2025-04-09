@@ -36,6 +36,13 @@
                 <div class="progress" style="width: <%= stats.resolution %>%;"></div>
             </div>
         </div>
+        
+        <div class="stat-card feedback-card">
+            <div class="stat-header">Customer Feedback</div>
+            <div class="stat-value" id="avgRating">-</div>
+            <div class="stars-display" id="avgRatingStars"></div>
+            <div class="rating-count" id="ratingCount"></div>
+        </div>
     </div>
     
     <div class="tickets-section">
@@ -43,13 +50,33 @@
         
         <div class="ticket-filters">
             <div class="filter-group">
-                <label for="ticketFilter">Filter:</label>
+                <label for="ticketFilter">Status:</label>
                 <select id="ticketFilter" onchange="filterTickets()">
                     <option value="all">All Tickets</option>
                     <option value="Åpen">Open</option>
                     <option value="Under arbeid">In Progress</option>
                     <option value="Løst">Resolved</option>
                     <option value="Closed">Closed</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="priorityFilter">Priority:</label>
+                <select id="priorityFilter" onchange="filterTickets()">
+                    <option value="all">All</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="categoryFilter">Category:</label>
+                <select id="categoryFilter" onchange="filterTickets()">
+                    <option value="all">All</option>
+                    <option value="Bug">Bug</option>
+                    <option value="Feature Request">Feature Request</option>
+                    <option value="Support">Support</option>
                 </select>
             </div>
             
@@ -67,7 +94,10 @@
                 </div>
             <% } else { %>
                 <% assignedTickets.forEach(ticket => { %>
-                    <div class="ticket-card" data-status="<%= ticket.status %>">
+                    <div class="ticket-card" 
+                         data-status="<%= ticket.status %>" 
+                         data-priority="<%= ticket.priority %>"
+                         data-category="<%= ticket.category %>">
                         <div class="ticket-header">
                             <h3 class="ticket-title">
                                 <a href="/tickets/view/<%= ticket._id %>"><%= ticket.title %></a>
@@ -286,6 +316,23 @@
     .progress {
         height: 100%;
         background-color: #4CAF50;
+    }
+    
+    .feedback-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stars-display {
+        font-size: 1.2rem;
+        color: #FFD700;
+        margin-bottom: 5px;
+    }
+    
+    .rating-count {
+        font-size: 0.9rem;
+        color: #aaa;
     }
     
     .tickets-section, .other-tickets-section {
@@ -619,17 +666,31 @@
 
 <script>
     function filterTickets() {
-        const filter = document.getElementById('ticketFilter').value;
+        const statusFilter = document.getElementById('ticketFilter').value;
+        const priorityFilter = document.getElementById('priorityFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
         const tickets = document.querySelectorAll('.ticket-card');
         
         tickets.forEach(ticket => {
             const status = ticket.dataset.status;
+            const priority = ticket.dataset.priority;
+            const category = ticket.dataset.category;
             
-            if (filter === 'all' || status === filter) {
-                ticket.style.display = '';
-            } else {
-                ticket.style.display = 'none';
+            let showTicket = true;
+            
+            if (statusFilter !== 'all' && status !== statusFilter) {
+                showTicket = false;
             }
+            
+            if (priorityFilter !== 'all' && priority !== priorityFilter) {
+                showTicket = false;
+            }
+            
+            if (categoryFilter !== 'all' && category !== categoryFilter) {
+                showTicket = false;
+            }
+            
+            ticket.style.display = showTicket ? '' : 'none';
         });
     }
     
@@ -739,6 +800,27 @@
             closeUpdateModal();
         }
     }
+    
+    // Fetch feedback statistics
+    async function fetchFeedbackStats() {
+        try {
+            const response = await fetch('/tickets/feedback/stats');
+            const data = await response.json();
+            
+            if (data) {
+                document.getElementById('avgRating').textContent = data.averageRating;
+                document.getElementById('avgRatingStars').innerHTML = '★'.repeat(Math.round(data.averageRating)) + '☆'.repeat(5 - Math.round(data.averageRating));
+                document.getElementById('ratingCount').textContent = data.count + ' ratings';
+            }
+        } catch (error) {
+            console.error('Error fetching feedback stats:', error);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch feedback statistics
+        fetchFeedbackStats();
+    });
 </script>
 
 <%- include('./partials/footer') %>
