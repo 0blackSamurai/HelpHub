@@ -9,6 +9,7 @@ router.get('/all', isAuthenticated, ticketController.getTickets);
 router.put('/update-status', isAuthenticated, isAdmin, ticketController.updateTicketStatus);
 router.get('/dashboard', isAuthenticated, isAdmin, ticketController.getAllTicketsForAdmin);
 router.post('/edit', isAuthenticated, ticketController.editTicket);
+router.delete('/delete/:id', isAuthenticated, isAdmin, ticketController.deleteTicket); // New route for ticket deletion
 
 // New routes for viewing tickets and comments
 router.get('/view/:id', isAuthenticated, ticketController.viewTicket);

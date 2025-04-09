@@ -52,6 +52,9 @@
             <a href="<%= locals.userRole === 'Admin' ? '/tickets/dashboard' : '/profile' %>" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
             <% if(locals.userRole === 'Admin' || ticket.userId.toString() === locals.userId) { %>
                 <button onclick="openEditModal()" class="btn-edit"><i class="fas fa-edit"></i> Edit Ticket</button>
+                <% if(locals.userRole === 'Admin' && (ticket.status === 'Løst' || ticket.status === 'Closed')) { %>
+                    <button onclick="confirmDelete('<%= ticket._id %>')" class="btn-delete"><i class="fas fa-trash"></i> Delete</button>
+                <% } %>
             <% } %>
         </div>
     </div>
@@ -95,6 +98,18 @@
         </div>
     </div>
     
+    <!-- Add Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content delete-modal">
+            <h3 class="modal-title">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this ticket? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button type="button" onclick="closeDeleteModal()" class="btn-cancel">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         function openEditModal() {
             document.getElementById('editModal').style.display = 'block';
@@ -132,6 +147,44 @@
                 }
             } catch (error) {
                 alert('Error updating ticket: ' + error.message);
+            }
+        });
+
+        // Delete functionality
+        function confirmDelete(ticketId) {
+            document.getElementById('deleteModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            // Set up the delete action
+            document.getElementById('confirmDeleteBtn').onclick = async function() {
+                try {
+                    const response = await fetch(`/tickets/delete/${ticketId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        // Redirect to dashboard/profile after successful deletion
+                        window.location.href = '<%= locals.userRole === "Admin" ? "/tickets/dashboard" : "/profile" %>';
+                    } else {
+                        const error = await response.text();
+                        alert('Error deleting ticket: ' + error);
+                    }
+                } catch (error) {
+                    alert('Error deleting ticket: ' + error.message);
+                }
+            };
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const deleteModal = document.getElementById('deleteModal');
+            if (event.target === deleteModal) {
+                closeDeleteModal();
             }
         });
     </script>
@@ -209,6 +262,33 @@
         .user-badge {
             background-color: #2196F3;
             color: white;
+        }
+        
+        /* Add delete button styles */
+        .btn-delete {
+            background-color: #F44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-delete:hover {
+            background-color: #D32F2F;
+        }
+        
+        .delete-modal {
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .delete-modal p {
+            margin: 20px 0;
+            color: #ddd;
         }
     </style>
 </body>

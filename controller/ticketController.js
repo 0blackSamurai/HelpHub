@@ -198,3 +198,30 @@ exports.addComment = async (req, res) => {
         res.status(500).send('Error adding comment');
     }
 };
+
+exports.deleteTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Find the ticket
+        const ticket = await Ticket.findById(id);
+        
+        if (!ticket) {
+            return res.status(404).send('Ticket not found');
+        }
+        
+        // Verify the ticket is either 'Løst' (Resolved) or 'Closed'
+        if (ticket.status !== 'Løst' && ticket.status !== 'Closed') {
+            return res.status(403).send('Only resolved or closed tickets can be deleted');
+        }
+        
+        // Delete the ticket
+        await Ticket.findByIdAndDelete(id);
+        
+        // Return success response
+        return res.status(200).send('Ticket deleted successfully');
+    } catch (error) {
+        console.error('Error deleting ticket:', error);
+        return res.status(500).send('Server error while deleting ticket');
+    }
+};
