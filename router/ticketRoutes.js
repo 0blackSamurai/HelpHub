@@ -21,4 +21,7 @@ router.get('/analytics', isAuthenticated, isAdmin, ticketController.renderAdminA
 // Support staff dashboard route
 router.get('/support-dashboard', isAuthenticated, isSupportStaff, ticketController.getSupportDashboard);
 
+// Route for support staff to update tickets assigned to them
+router.put('/update-assigned', isAuthenticated, isSupportStaff, ticketController.updateAssignedTicket);
+
 module.exports = router;

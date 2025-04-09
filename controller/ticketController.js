@@ -438,3 +438,52 @@ exports.renderAdminAnalytics = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+// Allow support staff to update tickets assigned to them
+exports.updateAssignedTicket = async (req, res) => {
+    try {
+        const { ticketId, status, comment } = req.body;
+        
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        // Verify the user is assigned to this ticket
+        if (!ticket.assignedTo || ticket.assignedTo.toString() !== req.user.userId) {
+            return res.status(403).json({ error: 'You are not authorized to update this ticket' });
+        }
+        
+        // Update the ticket status
+        if (status && status !== ticket.status) {
+            ticket.status = status;
+        }
+        
+        // Add a comment if provided
+        if (comment && comment.trim() !== '') {
+            ticket.comments.push({
+                userId: req.user.userId,
+                message: comment
+            });
+            
+            // Create notification for ticket owner
+            const message = new Message({
+                userId: ticket.userId,
+                ticketId: ticket._id,
+                commentId: ticket.comments[ticket.comments.length - 1]._id,
+                message: `Support staff updated your ticket: "${ticket.title}"`
+            });
+            
+            await message.save();
+        }
+        
+        await ticket.save();
+        
+        res.status(200).json({ message: 'Ticket updated successfully' });
+    } catch (error) {
+        console.error('Error updating assigned ticket:', error);
+        res.status(500).json({ error: 'Failed to update ticket' });
+    }
+};

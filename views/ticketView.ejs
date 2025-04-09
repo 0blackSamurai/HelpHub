@@ -58,6 +58,8 @@
             </div>
         </div>
         
+       
+        
         <div class="comments-section">
             <h2>Discussion</h2>
             
@@ -124,9 +126,162 @@
                     </div>
                 </form>
             </div>
+            
+            <% if ((ticket.assignedTo && ticket.assignedTo.toString() === userId) || 
+                   isAdmin || ticket.userId.toString() === userId) { %>
+                <div class="update-ticket-section">
+                    <button id="updateTicketBtn" class="btn-update-ticket">
+                        <i class="fas fa-edit"></i> Update Ticket
+                    </button>
+                </div>
+            <% } %>
         </div>
     </div>
 </div>
+
+<!-- Update Ticket Modal -->
+<div id="updateTicketModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <h2>Update Ticket</h2>
+        
+        <form id="updateTicketForm" method="POST">
+            <input type="hidden" name="ticketId" value="<%= ticket._id %>">
+            
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" name="title" id="title" value="<%= ticket.title %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea name="description" id="description" rows="5" required><%= ticket.description %></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="priority">Priority</label>
+                    <select name="priority" id="priority" required>
+                        <option value="Low" <%= ticket.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                        <option value="Medium" <%= ticket.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
+                        <option value="High" <%= ticket.priority === 'High' ? 'selected' : '' %>>High</option>
+                    </select>
+                </div>
+                
+                <div class="form-group half">
+                    <label for="category">Category</label>
+                    <select name="category" id="category" required>
+                        <option value="Bug" <%= ticket.category === 'Bug' ? 'selected' : '' %>>Bug</option>
+                        <option value="Feature Request" <%= ticket.category === 'Feature Request' ? 'selected' : '' %>>Feature Request</option>
+                        <option value="Support" <%= ticket.category === 'Support' ? 'selected' : '' %>>Support</option>
+                    </select>
+                </div>
+            </div>
+            
+            <% if (isAdmin || isSupportStaff) { %>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" required>
+                        <option value="Åpen" <%= ticket.status === 'Åpen' ? 'selected' : '' %>>Open</option>
+                        <option value="Under arbeid" <%= ticket.status === 'Under arbeid' ? 'selected' : '' %>>In Progress</option>
+                        <option value="Løst" <%= ticket.status === 'Løst' ? 'selected' : '' %>>Resolved</option>
+                        <option value="Closed" <%= ticket.status === 'Closed' ? 'selected' : '' %>>Closed</option>
+                    </select>
+                </div>
+            <% } %>
+            
+            <div class="form-group">
+                <label for="updateComment">Add Comment (Optional)</label>
+                <textarea name="userComment" id="updateComment" rows="3" placeholder="Add a comment about your update (optional)"></textarea>
+            </div>
+            
+            <div id="updateError" class="error-message hidden"></div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeUpdateModal()">Cancel</button>
+                <button type="button" class="btn-submit" onclick="submitUpdate()">
+                    <i class="fas fa-save"></i> Update Ticket
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Function to update ticket status
+    async function updateTicketStatus() {
+        const ticketId = document.querySelector('#statusUpdateForm input[name="ticketId"]').value;
+        const status = document.getElementById('statusUpdate').value;
+        
+        try {
+            const response = await fetch('<%= isSupportStaff ? "/tickets/update-assigned" : "/tickets/update-status" %>', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ticketId, status })
+            });
+            
+            if (response.ok) {
+                // Reload the page to show updated status
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to update ticket status');
+            }
+        } catch (error) {
+            console.error('Error updating ticket status:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+    
+    // Modal functions
+    function openUpdateModal() {
+        document.getElementById('updateTicketModal').style.display = 'block';
+        document.getElementById('updateError').classList.add('hidden');
+    }
+    
+    function closeUpdateModal() {
+        document.getElementById('updateTicketModal').style.display = 'none';
+    }
+    
+    // Submit update
+    async function submitUpdate() {
+        const form = document.getElementById('updateTicketForm');
+        const formData = new FormData(form);
+        const errorElement = document.getElementById('updateError');
+        
+        try {
+            const response = await fetch('/tickets/edit', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                location.reload(); // Reload the page to show updates
+            } else {
+                const error = await response.text();
+                errorElement.textContent = error || 'Failed to update ticket';
+                errorElement.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error updating ticket:', error);
+            errorElement.textContent = 'An error occurred while updating the ticket';
+            errorElement.classList.remove('hidden');
+        }
+    }
+    
+    // Add event listener to open modal
+    document.getElementById('updateTicketBtn').addEventListener('click', openUpdateModal);
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('updateTicketModal');
+        if (event.target === modal) {
+            closeUpdateModal();
+        }
+    }
+</script>
 
 <style>
     .ticket-view-container {
@@ -431,6 +586,155 @@
         background-color: #444;
     }
     
+    .ticket-actions-panel {
+        background-color: #333;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+    
+    .ticket-actions-panel h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+    
+    .status-update-form {
+        display: flex;
+        align-items: center;
+    }
+    
+    .btn-update-status {
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-update-status:hover {
+        background-color: #0b7dda;
+    }
+    
+    .update-ticket-section {
+        padding-top: 20px;
+        margin-top: 20px;
+        border-top: 1px solid #444;
+        text-align: center;
+    }
+    
+    .btn-update-ticket {
+        background-color: #ff9800;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-update-ticket:hover {
+        background-color: #f57c00;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        overflow: auto;
+    }
+    
+    .modal-content {
+        background-color: #2a2a2a;
+        margin: 5% auto;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        max-width: 600px;
+        width: 90%;
+        position: relative;
+    }
+    
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: #fff;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .half {
+        flex: 1;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ddd;
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        background-color: #333;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+    }
+    
+    .error-message {
+        background-color: rgba(244, 67, 54, 0.2);
+        border-left: 4px solid #f44336;
+        padding: 12px;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
     @media (max-width: 768px) {
         .ticket-content {
             grid-template-columns: 1fr;
@@ -439,6 +743,11 @@
         .ticket-header {
             flex-direction: column;
             align-items: flex-start;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 0;
         }
     }
 </style>

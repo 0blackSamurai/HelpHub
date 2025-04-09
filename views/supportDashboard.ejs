@@ -111,6 +111,10 @@
                                 <i class="fas fa-eye"></i> View
                             </a>
                             
+                            <button class="btn btn-update" onclick="openUpdateModal('<%= ticket._id %>', '<%= ticket.title %>', '<%= ticket.status %>')">
+                                <i class="fas fa-edit"></i> Update
+                            </button>
+                            
                             <% if (ticket.status === 'Åpen' || ticket.status === 'Under arbeid') { %>
                                 <button class="btn btn-success" onclick="updateTicketStatus('<%= ticket._id %>', 'Løst')">
                                     <i class="fas fa-check-circle"></i> Mark Resolved
@@ -161,6 +165,42 @@
         </div>
     </div>
     <% } %>
+</div>
+
+<!-- Update Ticket Modal -->
+<div id="updateTicketModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <h2>Update Ticket: <span id="updateTicketTitle"></span></h2>
+        
+        <form id="updateTicketForm">
+            <input type="hidden" id="updateTicketId">
+            
+            <div class="form-group">
+                <label for="updateStatus">Status:</label>
+                <select id="updateStatus">
+                    <option value="Åpen">Open</option>
+                    <option value="Under arbeid">In Progress</option>
+                    <option value="Løst">Resolved</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="updateComment">Add Comment:</label>
+                <textarea id="updateComment" rows="4" placeholder="Add a comment or update note..."></textarea>
+            </div>
+            
+            <div id="updateTicketError" class="error-message hidden"></div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeUpdateModal()">Cancel</button>
+                <button type="button" class="btn-submit" onclick="submitTicketUpdate()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <style>
@@ -409,6 +449,11 @@
         color: white;
     }
     
+    .btn-update {
+        background-color: #2196F3;
+        color: white;
+    }
+    
     table {
         width: 100%;
         border-collapse: collapse;
@@ -470,6 +515,81 @@
     .priority-low {
         background-color: #4CAF50;
         color: white;
+    }
+    
+    .error-message {
+        background-color: rgba(244, 67, 54, 0.2);
+        border-left: 4px solid #f44336;
+        padding: 12px;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        overflow: auto;
+    }
+    
+    .modal-content {
+        background-color: #2a2a2a;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
+        position: relative;
+    }
+    
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: #fff;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ccc;
+    }
+    
+    .form-group select, 
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #333;
+        border: 1px solid #555;
+        color: #fff;
+        font-family: inherit;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
     }
     
     @media (max-width: 768px) {
@@ -548,6 +668,75 @@
         } catch (error) {
             console.error('Error updating ticket status:', error);
             alert('An error occurred. Please try again.');
+        }
+    }
+    
+    // Open update modal
+    function openUpdateModal(ticketId, ticketTitle, currentStatus) {
+        document.getElementById('updateTicketId').value = ticketId;
+        document.getElementById('updateTicketTitle').textContent = ticketTitle;
+        
+        // Set current status in dropdown
+        const statusDropdown = document.getElementById('updateStatus');
+        for (let i = 0; i < statusDropdown.options.length; i++) {
+            if (statusDropdown.options[i].value === currentStatus) {
+                statusDropdown.selectedIndex = i;
+                break;
+            }
+        }
+        
+        // Clear previous inputs
+        document.getElementById('updateComment').value = '';
+        document.getElementById('updateTicketError').classList.add('hidden');
+        
+        // Show modal
+        document.getElementById('updateTicketModal').style.display = 'block';
+    }
+    
+    // Close update modal
+    function closeUpdateModal() {
+        document.getElementById('updateTicketModal').style.display = 'none';
+    }
+    
+    // Submit ticket update
+    async function submitTicketUpdate() {
+        const ticketId = document.getElementById('updateTicketId').value;
+        const status = document.getElementById('updateStatus').value;
+        const comment = document.getElementById('updateComment').value;
+        const errorElement = document.getElementById('updateTicketError');
+        
+        try {
+            const response = await fetch('/tickets/update-assigned', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ticketId, status, comment })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                errorElement.textContent = data.error || 'Failed to update ticket';
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            // Success - close modal and reload page
+            closeUpdateModal();
+            location.reload();
+        } catch (error) {
+            console.error('Error updating ticket:', error);
+            errorElement.textContent = 'An error occurred while updating the ticket';
+            errorElement.classList.remove('hidden');
+        }
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('updateTicketModal');
+        if (event.target === modal) {
+            closeUpdateModal();
         }
     }
 </script>
