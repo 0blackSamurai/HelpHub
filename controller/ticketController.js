@@ -129,6 +129,7 @@ exports.viewTicket = async (req, res) => {
     }
 };
 
+// Modified addComment to notify ticket owner and assigned support staff
 exports.addComment = async (req, res) => {
     try {
         const { ticketId, comment } = req.body;
@@ -137,7 +138,9 @@ exports.addComment = async (req, res) => {
             return res.status(400).send('Missing required fields');
         }
         
-        const ticket = await Ticket.findById(ticketId).populate('userId', 'username');
+        const ticket = await Ticket.findById(ticketId)
+            .populate('userId', 'username')
+            .populate('assignedTo', 'username role _id');
         
         if (!ticket) {
             return res.status(404).send('Ticket not found');
@@ -152,45 +155,61 @@ exports.addComment = async (req, res) => {
         ticket.comments.push(newComment);
         await ticket.save();
         
-        // Create notification for ticket owner if comment was not made by the ticket owner
-        if (ticket.userId._id.toString() !== req.user.userId) {
+        // Create notifications based on who commented:
+        const commenterId = req.user.userId;
+        const commenterRole = req.user.role;
+        
+        // 1. If a regular user commented on their own ticket with an assigned support staff
+        if (ticket.userId._id.toString() === commenterId && ticket.assignedTo) {
+            // Notify the assigned support staff
             const message = new Message({
+                userId: ticket.assignedTo._id,
+                ticketId: ticket._id,
+                commentId: ticket.comments[ticket.comments.length - 1]._id,
+                message: `New comment from ticket owner on your assigned ticket: "${ticket.title}"`
+            });
+            
+            await message.save();
+        }
+        
+        // 2. If support staff commented on a ticket
+        else if ((commenterRole === '1st Line' || commenterRole === '2nd Line') && 
+                 ticket.userId._id.toString() !== commenterId) {
+            // Notify the ticket owner
+            const message = new Message({
+                userId: ticket.userId._id,
+                ticketId: ticket._id,
+                commentId: ticket.comments[ticket.comments.length - 1]._id,
+                message: `New comment from support staff on your ticket: "${ticket.title}"`
+            });
+            
+            await message.save();
+        }
+        
+        // 3. If someone else commented (like admin), notify both owner and assigned staff
+        else if (ticket.userId._id.toString() !== commenterId) {
+            // Notify the ticket owner
+            const ownerMessage = new Message({
                 userId: ticket.userId._id,
                 ticketId: ticket._id,
                 commentId: ticket.comments[ticket.comments.length - 1]._id,
                 message: `New comment on your ticket: "${ticket.title}"`
             });
             
-            await message.save();
+            await ownerMessage.save();
+            
+            // If ticket is assigned, notify the support staff as well
+            if (ticket.assignedTo && ticket.assignedTo._id.toString() !== commenterId) {
+                const staffMessage = new Message({
+                    userId: ticket.assignedTo._id,
+                    ticketId: ticket._id,
+                    commentId: ticket.comments[ticket.comments.length - 1]._id,
+                    message: `New comment on your assigned ticket: "${ticket.title}"`
+                });
+                
+                await staffMessage.save();
+            }
         }
-        
-        // Create notifications for all admin users
-        const adminUsers = await User.find({ role: 'Admin' });
-        
-        // Create promises array for all admin notifications
-        const adminNotifications = adminUsers.map(async (admin) => {
-            // Skip if the admin is the one who made the comment
-            if (admin._id.toString() === req.user.userId) {
-                return;
-            }
-            
-            // Skip if the admin is the ticket owner (to avoid duplicate notifications)
-            if (admin._id.toString() === ticket.userId._id.toString()) {
-                return;
-            }
-            
-            const adminMessage = new Message({
-                userId: admin._id,
-                ticketId: ticket._id,
-                commentId: ticket.comments[ticket.comments.length - 1]._id,
-                message: `New comment by ${req.user.username || 'a user'} on ticket: "${ticket.title}"`
-            });
-            
-            return adminMessage.save();
-        });
-        
-        // Execute all admin notification saves
-        await Promise.all(adminNotifications.filter(Boolean));
         
         res.redirect(`/tickets/view/${ticketId}`);
     } catch (error) {
@@ -223,5 +242,199 @@ exports.deleteTicket = async (req, res) => {
     } catch (error) {
         console.error('Error deleting ticket:', error);
         return res.status(500).send('Server error while deleting ticket');
+    }
+};
+
+// Update assign ticket to notify only relevant support staff
+exports.assignTicket = async (req, res) => {
+    try {
+        const { ticketId, userId, role } = req.body;
+        
+        if (!ticketId || !userId || !role) {
+            return res.status(400).json({ error: 'Ticket ID, User ID, and role are required' });
+        }
+        
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        // Update the ticket with assignment info
+        ticket.assignedTo = userId;
+        ticket.assignedRole = role;
+        
+        // Update status to "Under arbeid" if it's "Åpen"
+        if (ticket.status === 'Åpen') {
+            ticket.status = 'Under arbeid';
+        }
+        
+        await ticket.save();
+        
+        // Create a notification for the assigned user
+        const message = new Message({
+            userId: userId,
+            ticketId: ticketId,
+            message: `You have been assigned to ticket: "${ticket.title}"`
+        });
+        
+        await message.save();
+        
+        res.status(200).json({ message: 'Ticket assigned successfully' });
+    } catch (error) {
+        console.error('Error assigning ticket:', error);
+        res.status(500).json({ error: 'Failed to assign ticket' });
+    }
+};
+
+// Get tickets assigned to the logged-in support staff
+exports.getSupportDashboard = async (req, res) => {
+    try {
+        // Find tickets assigned to this support staff
+        const assignedTickets = await Ticket.find({ 
+            assignedTo: req.user.userId 
+        }).populate('userId');
+        
+        // Find other tickets (for reference)
+        const otherTickets = await Ticket.find({ 
+            assignedRole: req.user.role,
+            assignedTo: { $ne: req.user.userId } 
+        }).populate('userId').limit(10);
+        
+        // Ticket counts and stats
+        const totalAssigned = assignedTickets.length;
+        const inProgress = assignedTickets.filter(t => t.status === 'Under arbeid').length;
+        const resolved = assignedTickets.filter(t => t.status === 'Løst').length;
+        const closed = assignedTickets.filter(t => t.status === 'Closed').length;
+        
+        res.render('supportDashboard', {
+            title: `${req.user.role} Dashboard`,
+            assignedTickets,
+            otherTickets,
+            stats: {
+                totalAssigned,
+                inProgress,
+                resolved,
+                closed,
+                resolution: totalAssigned > 0 ? Math.round(((resolved + closed) / totalAssigned) * 100) : 0
+            },
+            role: req.user.role
+        });
+    } catch (error) {
+        console.error('Error loading support dashboard:', error);
+        res.status(500).send('Server error');
+    }
+};
+
+// Get ticket statistics for admin dashboard
+exports.getTicketStatistics = async (req, res) => {
+    try {
+        // Get total tickets count
+        const totalTickets = await Ticket.countDocuments();
+        
+        // Get tickets by status
+        const openTickets = await Ticket.countDocuments({ status: 'Åpen' });
+        const inProgressTickets = await Ticket.countDocuments({ status: 'Under arbeid' });
+        const resolvedTickets = await Ticket.countDocuments({ status: 'Løst' });
+        const closedTickets = await Ticket.countDocuments({ status: 'Closed' });
+        
+        // Get tickets by support level
+        const firstLineTickets = await Ticket.countDocuments({ assignedRole: '1st Line' });
+        const firstLineResolved = await Ticket.countDocuments({ 
+            assignedRole: '1st Line', 
+            status: { $in: ['Løst', 'Closed'] }
+        });
+        
+        const secondLineTickets = await Ticket.countDocuments({ assignedRole: '2nd Line' });
+        const secondLineResolved = await Ticket.countDocuments({ 
+            assignedRole: '2nd Line', 
+            status: { $in: ['Løst', 'Closed'] }
+        });
+        
+        // Get unassigned tickets
+        const unassignedTickets = await Ticket.countDocuments({ assignedTo: null });
+        
+        // Return statistics
+        res.status(200).json({
+            total: totalTickets,
+            byStatus: {
+                open: openTickets,
+                inProgress: inProgressTickets,
+                resolved: resolvedTickets,
+                closed: closedTickets
+            },
+            bySupport: {
+                firstLine: {
+                    total: firstLineTickets,
+                    resolved: firstLineResolved
+                },
+                secondLine: {
+                    total: secondLineTickets,
+                    resolved: secondLineResolved
+                },
+                unassigned: unassignedTickets
+            }
+        });
+    } catch (error) {
+        console.error('Error getting ticket statistics:', error);
+        res.status(500).json({ error: 'Failed to get ticket statistics' });
+    }
+};
+
+// Render admin analytics page
+exports.renderAdminAnalytics = async (req, res) => {
+    try {
+        // Get ticket statistics
+        const totalTickets = await Ticket.countDocuments();
+        
+        // Get tickets by status
+        const openTickets = await Ticket.countDocuments({ status: 'Åpen' });
+        const inProgressTickets = await Ticket.countDocuments({ status: 'Under arbeid' });
+        const resolvedTickets = await Ticket.countDocuments({ status: 'Løst' });
+        const closedTickets = await Ticket.countDocuments({ status: 'Closed' });
+        
+        // Get tickets by support level
+        const firstLineTickets = await Ticket.countDocuments({ assignedRole: '1st Line' });
+        const firstLineResolved = await Ticket.countDocuments({ 
+            assignedRole: '1st Line', 
+            status: { $in: ['Løst', 'Closed'] }
+        });
+        
+        const secondLineTickets = await Ticket.countDocuments({ assignedRole: '2nd Line' });
+        const secondLineResolved = await Ticket.countDocuments({ 
+            assignedRole: '2nd Line', 
+            status: { $in: ['Løst', 'Closed'] }
+        });
+        
+        // Get unassigned tickets
+        const unassignedTickets = await Ticket.countDocuments({ assignedTo: null });
+        
+        // Render the analytics page with data
+        res.render('adminAnalytics', {
+            title: 'Support Analytics',
+            stats: {
+                total: totalTickets,
+                byStatus: {
+                    open: openTickets,
+                    inProgress: inProgressTickets,
+                    resolved: resolvedTickets,
+                    closed: closedTickets
+                },
+                bySupport: {
+                    firstLine: {
+                        total: firstLineTickets,
+                        resolved: firstLineResolved
+                    },
+                    secondLine: {
+                        total: secondLineTickets,
+                        resolved: secondLineResolved
+                    },
+                    unassigned: unassignedTickets
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering analytics page:', error);
+        res.status(500).send('Server error');
     }
 };

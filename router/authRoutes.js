@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
         
         // Create JWT token
         const token = jwt.sign(
-            { userId: user._id, role: user.role },
+            { userId: user._id, role: user.role, username: user.username },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -52,6 +52,8 @@ router.post('/login', async (req, res) => {
         // Redirect based on role
         if (user.role === 'Admin') {
             return res.redirect('/dashboard');
+        } else if (user.role === '1st Line' || user.role === '2nd Line') {
+            return res.redirect('/tickets/support-dashboard');
         } else {
             return res.redirect('/tickets/my-tickets');
         }

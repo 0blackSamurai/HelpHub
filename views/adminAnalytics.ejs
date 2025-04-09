@@ -1,0 +1,306 @@
+<%- include('./partials/header') %>
+
+<div class="analytics-container">
+    <h1><i class="fas fa-chart-line"></i> Support Team Analytics</h1>
+    
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-header">Total Tickets</div>
+            <div class="stat-value"><%= stats.total %></div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">Open</div>
+            <div class="stat-value"><%= stats.byStatus.open %></div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">In Progress</div>
+            <div class="stat-value"><%= stats.byStatus.inProgress %></div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">Resolved</div>
+            <div class="stat-value"><%= stats.byStatus.resolved %></div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">Closed</div>
+            <div class="stat-value"><%= stats.byStatus.closed %></div>
+        </div>
+    </div>
+    
+    <h2>Support Team Performance</h2>
+    
+    <div class="support-stats">
+        <div class="support-team-card">
+            <div class="team-header">
+                <h3>1st Line Support</h3>
+                <div class="performance-indicator">
+                    <% 
+                        const firstLinePercent = stats.bySupport.firstLine.total > 0 ? 
+                            Math.round((stats.bySupport.firstLine.resolved / stats.bySupport.firstLine.total) * 100) : 0;
+                    %>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: <%= firstLinePercent %>%;"></div>
+                    </div>
+                    <div class="percentage"><%= firstLinePercent %>%</div>
+                </div>
+            </div>
+            
+            <div class="ticket-stats">
+                <div class="ticket-stat-item">
+                    <span class="label">Total Assigned:</span>
+                    <span class="value"><%= stats.bySupport.firstLine.total %></span>
+                </div>
+                <div class="ticket-stat-item">
+                    <span class="label">Resolved/Closed:</span>
+                    <span class="value"><%= stats.bySupport.firstLine.resolved %></span>
+                </div>
+                <div class="ticket-stat-item">
+                    <span class="label">In Progress:</span>
+                    <span class="value"><%= stats.bySupport.firstLine.total - stats.bySupport.firstLine.resolved %></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="support-team-card">
+            <div class="team-header">
+                <h3>2nd Line Support</h3>
+                <div class="performance-indicator">
+                    <% 
+                        const secondLinePercent = stats.bySupport.secondLine.total > 0 ? 
+                            Math.round((stats.bySupport.secondLine.resolved / stats.bySupport.secondLine.total) * 100) : 0;
+                    %>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: <%= secondLinePercent %>%;"></div>
+                    </div>
+                    <div class="percentage"><%= secondLinePercent %>%</div>
+                </div>
+            </div>
+            
+            <div class="ticket-stats">
+                <div class="ticket-stat-item">
+                    <span class="label">Total Assigned:</span>
+                    <span class="value"><%= stats.bySupport.secondLine.total %></span>
+                </div>
+                <div class="ticket-stat-item">
+                    <span class="label">Resolved/Closed:</span>
+                    <span class="value"><%= stats.bySupport.secondLine.resolved %></span>
+                </div>
+                <div class="ticket-stat-item">
+                    <span class="label">In Progress:</span>
+                    <span class="value"><%= stats.bySupport.secondLine.total - stats.bySupport.secondLine.resolved %></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="unassigned-section">
+        <h3>Unassigned Tickets</h3>
+        <div class="unassigned-count">
+            <span><%= stats.bySupport.unassigned %></span>
+            <a href="/tickets/dashboard" class="btn btn-primary">Assign Tickets</a>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="/user-management" class="btn btn-secondary">
+            <i class="fas fa-users"></i> Manage Users
+        </a>
+        <a href="/dashboard" class="btn btn-primary">
+            <i class="fas fa-ticket-alt"></i> Ticket Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+    .analytics-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    h1, h2, h3 {
+        color: #fff;
+    }
+    
+    h1 {
+        margin-bottom: 30px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 15px;
+    }
+    
+    h2 {
+        margin: 40px 0 20px;
+    }
+    
+    .stats-overview {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        flex: 1;
+        min-width: 150px;
+        background-color: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .stat-header {
+        font-size: 1rem;
+        color: #aaa;
+        margin-bottom: 10px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .support-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .support-team-card {
+        flex: 1;
+        min-width: 300px;
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .team-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .team-header h3 {
+        margin: 0;
+    }
+    
+    .performance-indicator {
+        width: 150px;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background-color: #444;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 5px;
+    }
+    
+    .progress {
+        height: 100%;
+        background-color: #4CAF50;
+    }
+    
+    .percentage {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+    
+    .ticket-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+    }
+    
+    .ticket-stat-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .label {
+        font-size: 0.9rem;
+        color: #aaa;
+        margin-bottom: 5px;
+    }
+    
+    .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .unassigned-section {
+        background-color: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    
+    .unassigned-count {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+    }
+    
+    .unassigned-count span {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff9800;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #2196F3;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #555;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-overview {
+            flex-direction: column;
+        }
+        
+        .support-team-card {
+            min-width: 100%;
+        }
+        
+        .team-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .performance-indicator {
+            width: 100%;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<%- include('./partials/footer') %>

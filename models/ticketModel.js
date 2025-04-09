@@ -8,6 +8,8 @@ const ticketSchema = new Schema({
   category: { type: String, required: true, enum: ['Bug', 'Feature Request', 'Support'] },
   priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Low' },
   status: { type: String, enum: ['Åpen', 'Under arbeid', 'Løst', 'Closed'], default: 'Åpen' },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedRole: { type: String, enum: ['1st Line', '2nd Line', null], default: null },
   comments: [
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

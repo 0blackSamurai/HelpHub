@@ -94,6 +94,24 @@
             padding: 15px 10px;
             color: #888;
         }
+        /* Support role badges in nav */
+        .user-role-badge {
+            background-color: #555;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 5px;
+        }
+        .admin-role {
+            background-color: #e91e63;
+        }
+        .support-1st-role {
+            background-color: #4CAF50;
+        }
+        .support-2nd-role {
+            background-color: #ff9800;
+        }
     </style>
 </head>
 <body>
@@ -104,36 +122,43 @@
                 <li><a href="/">Home</a></li>
                 <% if (isAuthenticated) { %>
                     <% if (isAdmin) { %>
-                        <li><a href="/dashboard">Admin Dashboard</a></li>
+                        <li>
+                            <a href="/dashboard">Admin Dashboard</a>
+                            <span class="user-role-badge admin-role">Admin</span>
+                        </li>
+                    <% } else if (isSupportStaff) { %>
+                        <li>
+                            <a href="/tickets/support-dashboard">Support Dashboard</a>
+                            <span class="user-role-badge <%= userRole === '1st Line' ? 'support-1st-role' : 'support-2nd-role' %>">
+                                <%= userRole %>
+                            </span>
+                        </li>
                     <% } %>
                     <li><a href="/profile">Profile</a></li>
-                    <!-- <div> -->
-                        <li>
-                            <div class="message-receiver">
-                                <div class="message-icon" onclick="toggleMessages()">
-                                    <i class="fas fa-bell"></i>
-                                    <span class="notification-badge" id="notification-count">0</span>
+                    <li>
+                        <div class="message-receiver">
+                            <div class="message-icon" onclick="toggleMessages()">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge" id="notification-count">0</span>
+                            </div>
+                            <div class="messages-dropdown" id="messages-dropdown">
+                                <div class="dropdown-header">
+                                    <h4>Notifications</h4>
+                                    <span class="mark-all-read" onclick="markAllMessagesAsRead()">Mark all as read</span>
                                 </div>
-                                <div class="messages-dropdown" id="messages-dropdown">
-                                    <div class="dropdown-header">
-                                        <h4>Notifications</h4>
-                                        <span class="mark-all-read" onclick="markAllMessagesAsRead()">Mark all as read</span>
-                                    </div>
-                                    <div id="messages-container">
-                                        <div class="empty-messages">No new notifications</div>
-                                    </div>
+                                <div id="messages-container">
+                                    <div class="empty-messages">No new notifications</div>
                                 </div>
                             </div>
-                        </li>
-
-                        <li>
-                            <form action="/logout" class="logout-form" method="get">
-                                <button type="submit" class="btn-logout">
+                        </div>
+                    </li>
+                    <li>
+                        <form action="/logout" class="logout-form" method="get">
+                            <button type="submit" class="btn-logout">
                                 <i class="fas fa-sign-out-alt"></i> Logout
                             </button>
                         </form>
                     </li>
-                <!-- </div> -->
                 <% } else { %>
                     <li><a href="/login">Login</a></li>
                     <li><a href="/register">Register</a></li>

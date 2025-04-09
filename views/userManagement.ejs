@@ -1,0 +1,535 @@
+<%- include('./partials/header') %>
+
+<div class="user-management-container">
+    <h1><i class="fas fa-users-cog"></i> User Role Management</h1>
+    
+    <div class="alert hidden" id="statusAlert"></div>
+    
+    <div class="role-stats">
+        <div class="role-card">
+            <div class="role-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="role-name">Admin</div>
+            <div class="role-count" id="admin-count">0</div>
+        </div>
+        <div class="role-card">
+            <div class="role-icon"><i class="fas fa-headset"></i></div>
+            <div class="role-name">1st Line</div>
+            <div class="role-count" id="first-line-count">0</div>
+        </div>
+        <div class="role-card">
+            <div class="role-icon"><i class="fas fa-tools"></i></div>
+            <div class="role-name">2nd Line</div>
+            <div class="role-count" id="second-line-count">0</div>
+        </div>
+        <div class="role-card">
+            <div class="role-icon"><i class="fas fa-user"></i></div>
+            <div class="role-name">Users</div>
+            <div class="role-count" id="user-count">0</div>
+        </div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Current Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <% users.forEach(user => { %>
+                <tr data-user-id="<%= user._id %>">
+                    <td><%= user.username %></td>
+                    <td><%= user.epost %></td>
+                    <td class="user-role"><%= user.role %></td>
+                    <td class="actions-cell">
+                        <div class="role-selector-group">
+                            <select class="role-selector">
+                                <option value="Admin" <%= user.role === 'Admin' ? 'selected' : '' %>>Admin</option>
+                                <option value="1st Line" <%= user.role === '1st Line' ? 'selected' : '' %>>1st Line Support</option>
+                                <option value="2nd Line" <%= user.role === '2nd Line' ? 'selected' : '' %>>2nd Line Support</option>
+                                <option value="User" <%= user.role === 'User' ? 'selected' : '' %>>User</option>
+                            </select>
+                            <button class="btn-update-role">Update</button>
+                        </div>
+                        <button class="btn-delete-user" data-username="<%= user.username %>">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="/tickets/analytics" class="btn btn-primary">
+            <i class="fas fa-chart-line"></i> View Analytics
+        </a>
+        <a href="/dashboard" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Delete User Confirmation Modal -->
+<div id="deleteUserModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeDeleteModal()">&times;</span>
+        <h2>Delete User</h2>
+        <p>Are you sure you want to delete the user <strong id="deleteUsername"></strong>?</p>
+        <p class="warning-text">This action cannot be undone. The user and all associated data will be permanently removed.</p>
+        
+        <div id="deleteErrorMessage" class="error-message hidden"></div>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-delete-confirm" id="confirmDeleteButton">Delete User</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-management-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    h1 {
+        color: #fff;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 15px;
+    }
+    
+    .role-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .role-card {
+        flex: 1;
+        min-width: 120px;
+        background-color: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .role-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .role-icon i {
+        color: #2196F3;
+    }
+    
+    .role-card:nth-child(1) .role-icon i {
+        color: #ff5722;
+    }
+    
+    .role-card:nth-child(2) .role-icon i {
+        color: #4CAF50;
+    }
+    
+    .role-card:nth-child(3) .role-icon i {
+        color: #ff9800;
+    }
+    
+    .role-name {
+        color: #ddd;
+        margin-bottom: 5px;
+    }
+    
+    .role-count {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .table-wrapper {
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
+    
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .user-table th,
+    .user-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #444;
+    }
+    
+    .user-table th {
+        background-color: #333;
+        color: #fff;
+    }
+    
+    .user-table tr:hover {
+        background-color: #2a2a2a;
+    }
+    
+    .role-selector {
+        padding: 5px 10px;
+        margin-right: 10px;
+        background-color: #333;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 4px;
+    }
+    
+    .btn-update-role {
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #2196F3;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #555;
+        color: white;
+    }
+    
+    .alert {
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .alert.success {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .alert.error {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .role-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    /* New styles for delete functionality */
+    .actions-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .role-selector-group {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-delete-user {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-size: 0.85rem;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-delete-user:hover {
+        background-color: #d32f2f;
+    }
+    
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        overflow: auto;
+    }
+    
+    .modal-content {
+        background-color: #2a2a2a;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
+        position: relative;
+    }
+    
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: #fff;
+    }
+    
+    .warning-text {
+        color: #ff9800;
+        margin-bottom: 20px;
+    }
+    
+    .error-message {
+        background-color: rgba(244, 67, 54, 0.2);
+        border-left: 4px solid #f44336;
+        padding: 12px;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    .btn-cancel, .btn-delete-confirm {
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-cancel {
+        background-color: #555;
+        color: white;
+    }
+    
+    .btn-delete-confirm {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .btn-delete-confirm:hover {
+        background-color: #d32f2f;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Count roles
+        updateRoleCounts();
+        
+        // Add event listeners to update buttons
+        document.querySelectorAll('.btn-update-role').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const userId = row.dataset.userId;
+                const roleSelector = row.querySelector('.role-selector');
+                const newRole = roleSelector.value;
+                
+                updateUserRole(userId, newRole, row);
+            });
+        });
+        
+        // Add event listeners to delete buttons
+        document.querySelectorAll('.btn-delete-user').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const userId = row.dataset.userId;
+                const username = this.dataset.username;
+                
+                showDeleteConfirmation(userId, username);
+            });
+        });
+    });
+    
+    function updateRoleCounts() {
+        const rows = document.querySelectorAll('#users-table-body tr');
+        let adminCount = 0;
+        let firstLineCount = 0;
+        let secondLineCount = 0;
+        let userCount = 0;
+        
+        rows.forEach(row => {
+            const role = row.querySelector('.user-role').textContent;
+            switch(role) {
+                case 'Admin':
+                    adminCount++;
+                    break;
+                case '1st Line':
+                    firstLineCount++;
+                    break;
+                case '2nd Line':
+                    secondLineCount++;
+                    break;
+                case 'User':
+                    userCount++;
+                    break;
+            }
+        });
+        
+        document.getElementById('admin-count').textContent = adminCount;
+        document.getElementById('first-line-count').textContent = firstLineCount;
+        document.getElementById('second-line-count').textContent = secondLineCount;
+        document.getElementById('user-count').textContent = userCount;
+    }
+    
+    async function updateUserRole(userId, role, row) {
+        try {
+            const response = await fetch('/users/role', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId, role })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update the role display in the table
+                row.querySelector('.user-role').textContent = role;
+                
+                // Show success message
+                showAlert('User role updated successfully!', 'success');
+                
+                // Update role counts
+                updateRoleCounts();
+            } else {
+                showAlert(data.error || 'Failed to update user role', 'error');
+            }
+        } catch (error) {
+            console.error('Error updating user role:', error);
+            showAlert('Failed to update user role. Please try again.', 'error');
+        }
+    }
+    
+    function showAlert(message, type) {
+        const alert = document.getElementById('statusAlert');
+        alert.textContent = message;
+        alert.className = `alert ${type}`;
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            alert.className = 'alert hidden';
+        }, 3000);
+    }
+    
+    // Show delete confirmation modal
+    function showDeleteConfirmation(userId, username) {
+        document.getElementById('deleteUsername').textContent = username;
+        document.getElementById('deleteErrorMessage').classList.add('hidden');
+        
+        const confirmButton = document.getElementById('confirmDeleteButton');
+        confirmButton.onclick = function() {
+            deleteUser(userId);
+        };
+        
+        document.getElementById('deleteUserModal').style.display = 'block';
+    }
+    
+    // Close delete confirmation modal
+    function closeDeleteModal() {
+        document.getElementById('deleteUserModal').style.display = 'none';
+    }
+    
+    // Delete user
+    async function deleteUser(userId) {
+        try {
+            const response = await fetch(`/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Remove user from table
+                const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                
+                // Update role counts
+                updateRoleCounts();
+                
+                // Close modal
+                closeDeleteModal();
+                
+                // Show success message
+                showAlert('User deleted successfully', 'success');
+            } else {
+                // Show error message in modal
+                const errorMessage = document.getElementById('deleteErrorMessage');
+                errorMessage.textContent = data.error || 'Failed to delete user';
+                errorMessage.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            
+            // Show error message in modal
+            const errorMessage = document.getElementById('deleteErrorMessage');
+            errorMessage.textContent = 'An error occurred while deleting the user';
+            errorMessage.classList.remove('hidden');
+        }
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteUserModal');
+        if (event.target === modal) {
+            closeDeleteModal();
+        }
+    }
+</script>
+
+<%- include('./partials/footer') %>
