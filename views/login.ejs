@@ -121,76 +121,40 @@
                 loginAlert.classList.add('info');
             }, 2000);
             
-            // Convert FormData to a plain object
-            const formDataObject = {};
-            formData.forEach((value, key) => {
-                formDataObject[key] = value;
-            });
-            
-            // Fetch API for form submission - use JSON instead of FormData
+            // Fetch API for form submission
             fetch('/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(formDataObject),
-                credentials: 'same-origin'
+                body: formData
             })
             .then(response => {
                 clearTimeout(timeoutTimer);
                 
-                // Check if we got a redirect response
                 if (response.redirected) {
-                    console.log("Redirect detected to:", response.url);
                     window.location.href = response.url;
-                    return null;
+                    return;
                 }
-
-                // For non-redirect responses, try to parse JSON
-                if (response.ok) {
-                    return response.json().catch(() => {
-                        // If parsing JSON fails but response was OK, just redirect to profile
-                        console.log("Response OK but not JSON, redirecting to profile");
-                        window.location.href = '/profile';
-                        return null;
-                    });
-                } else {
-                    // Handle error responses
-                    return response.text().then(text => {
-                        let errorMsg = 'Login failed';
-                        try {
-                            const data = JSON.parse(text);
-                            errorMsg = data.message || 'Login failed. Please check your credentials.';
-                        } catch (e) {
-                            // If not JSON, use the text as the error message
-                            errorMsg = text || 'Login failed. Please check your credentials.';
-                        }
-                        throw new Error(errorMsg);
+                
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Login failed. Please check your credentials.');
                     });
                 }
+                
+                return response.json();
             })
             .then(data => {
-                // Only execute if we have data and haven't redirected yet
-                if (data) {
-                    console.log("Login successful, redirecting to:", data.redirectUrl);
-                    window.location.href = data.redirectUrl || '/profile';
-                }
+                // Should not reach here as we should be redirected on success
+                window.location.href = '/';
             })
             .catch(error => {
-                // Only show error if it's not a redirect
-                if (error.message !== 'Redirect') {
-                    console.error("Login error:", error);
-                    
-                    clearTimeout(timeoutTimer);
-                    loginAlert.textContent = error.message || 'An unexpected error occurred';
-                    loginAlert.classList.remove('hidden', 'info');
-                    loginAlert.classList.add('warning');
-                    
-                    buttonText.textContent = 'Login';
-                    loginSpinner.classList.add('hidden');
-                    loginButton.disabled = false;
-                }
+                clearTimeout(timeoutTimer);
+                loginAlert.textContent = error.message;
+                loginAlert.classList.remove('hidden', 'info');
+                loginAlert.classList.add('warning');
+                
+                buttonText.textContent = 'Login';
+                loginSpinner.classList.add('hidden');
+                loginButton.disabled = false;
             });
         });
     </script>
