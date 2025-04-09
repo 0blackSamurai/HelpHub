@@ -60,6 +60,10 @@ exports.login = async (req, res) => {
         const user = await User.findOne({ epost });
 
         if (!user) {
+            // Check if request expects JSON
+            if (req.is('application/json') || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+                return res.status(400).json({ success: false, message: 'User not found' });
+            }
             return res.status(400).send('User not found');
         }
 
@@ -67,26 +71,57 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(passord, user.passord);
 
         if (!isMatch) {
+            // Check if request expects JSON
+            if (req.is('application/json') || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+                return res.status(400).json({ success: false, message: 'Invalid password' });
+            }
             return res.status(400).send('Invalid password');
         }
 
         // Create and set token
         const token = jwt.sign(
-            { userId: user._id, role: user.role },
+            { userId: user._id, role: user.role, username: user.username },
             process.env.JWT_SECRET,
             { expiresIn: '48h' }
         );
         
-        res.cookie('user', token, { httpOnly: true });
+        // Set cookie with secure options
+        res.cookie('user', token, { 
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Only use secure in production
+            sameSite: 'lax', // Helps with CSRF protection
+            maxAge: 48 * 60 * 60 * 1000 // 48 hours in milliseconds
+        });
         
-        // Redirect based on role
-        if (user.role === 'Admin') {
-            return res.redirect('/tickets/dashboard');
+        console.log('Login successful for:', user.username);
+        
+        // Determine redirect URL based on user role
+        const redirectUrl = user.role === 'Admin' ? '/tickets/dashboard' : '/profile';
+        
+        // Handle different response formats based on request
+        if (req.is('application/json') || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            console.log('Sending JSON response');
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Login successful',
+                redirectUrl: redirectUrl
+            });
         } else {
-            return res.redirect('/profile');
+            console.log('Redirecting to:', redirectUrl);
+            return res.redirect(redirectUrl);
         }
     } catch (error) {
         console.error('Login error:', error);
+        
+        // Also handle JSON vs HTML responses for errors
+        if (req.is('application/json') || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(500).json({ 
+                success: false, 
+                message: 'An error occurred during login',
+                error: error.message
+            });
+        }
+        
         res.status(500).send('An error occurred during login');
     }
 };
