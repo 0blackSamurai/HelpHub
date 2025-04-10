@@ -1,0 +1,515 @@
+<%- include('./partials/header') %>
+
+<div class="faq-container">
+    <div class="faq-header">
+        <h1><i class="fas fa-question-circle"></i> Vanlige Spørsmål</h1>
+        <p class="faq-intro">Finn svar på de vanligste spørsmålene om vårt støttesystem.</p>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" id="faqSearch" placeholder="Søk etter spørsmål..." onkeyup="searchFAQ()">
+        <i class="fas fa-search search-icon"></i>
+    </div>
+    
+    <div class="faq-categories">
+        <button class="category-btn active" onclick="filterCategory('all')">Alle</button>
+        <button class="category-btn" onclick="filterCategory('general')">Generelt</button>
+        <button class="category-btn" onclick="filterCategory('tickets')">Tickets</button>
+        <button class="category-btn" onclick="filterCategory('account')">Konto</button>
+        <button class="category-btn" onclick="filterCategory('support')">Support</button>
+    </div>
+    
+    <div class="faq-list">
+        <!-- General Questions -->
+        <div class="faq-item" data-category="general">
+            <div class="faq-question">
+                <h3>Hva er HelpHub?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>HelpHub er et ticket-system designet for å hjelpe organisasjoner med å håndtere supportforespørsler effektivt. Det lar brukere opprette, spore og administrere tickets, mens supportpersonalet kan tildele, oppdatere og løse disse tickets.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="general">
+            <div class="faq-question">
+                <h3>Hvordan kommer jeg i gang med HelpHub?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å komme i gang:</p>
+                <ol>
+                    <li>Registrer en konto hvis du ikke allerede har en</li>
+                    <li>Logg inn på kontoen din</li>
+                    <li>Naviger til profilen din</li>
+                    <li>Opprett en ny ticket ved å klikke på "Opprett ny ticket"-knappen</li>
+                </ol>
+                <p>Når du har opprettet en ticket, kan du følge fremdriften fra profilsiden din.</p>
+            </div>
+        </div>
+        
+        <!-- Ticket Questions -->
+        <div class="faq-item" data-category="tickets">
+            <div class="faq-question">
+                <h3>Hvordan oppretter jeg en ny ticket?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å opprette en ny supportticket:</p>
+                <ol>
+                    <li>Logg inn på kontoen din</li>
+                    <li>Klikk på "Opprett ny ticket" fra profilsiden din</li>
+                    <li>Fyll inn ticketen, inkludert tittel, beskrivelse, kategori og prioritet</li>
+                    <li>Klikk "Opprett ticket" for å sende inn</li>
+                </ol>
+                <p>Din nye ticket vil vises i profilen din og være synlig for supportpersonalet.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="tickets">
+            <div class="faq-question">
+                <h3>Hva betyr de forskjellige ticket-statusene?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>HelpHub bruker følgende ticket-statuser:</p>
+                <ul>
+                    <li><strong>Åpen</strong>: En ny ticket som ikke har blitt tildelt eller påbegynt ennå</li>
+                    <li><strong>Under arbeid</strong>: Ticketen er tildelt til supportpersonale som jobber med den</li>
+                    <li><strong>Løst</strong>: Supportpersonale har gitt en løsning på ticketen</li>
+                    <li><strong>Lukket</strong>: Ticketen er fullstendig løst og avsluttet, ofte etter brukerbekreftelse</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="tickets">
+            <div class="faq-question">
+                <h3>Hvordan sjekker jeg statusen på ticketen min?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å sjekke statusen på ticketen din:</p>
+                <ol>
+                    <li>Logg inn på HelpHub-kontoen din</li>
+                    <li>Gå til profilsiden din</li>
+                    <li>Se listen over dine tickets</li>
+                    <li>Hver ticket vil vise gjeldende status (Åpen, Under arbeid, Løst eller Lukket)</li>
+                    <li>Klikk på ticketen for å se detaljert informasjon og eventuelle oppdateringer fra supportpersonalet</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="tickets">
+            <div class="faq-question">
+                <h3>Hvordan oppdaterer jeg en ticket jeg har opprettet?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å oppdatere en ticket du har opprettet:</p>
+                <ol>
+                    <li>Gå til profilsiden din</li>
+                    <li>Finn og klikk på ticketen du vil oppdatere</li>
+                    <li>På ticket-visningssiden, bla ned til bunnen og klikk "Oppdater ticket"</li>
+                    <li>Gjør endringene dine i ticket-detaljene</li>
+                    <li>Legg eventuelt til en kommentar som forklarer oppdateringene</li>
+                    <li>Klikk "Oppdater ticket" for å lagre endringene dine</li>
+                </ol>
+                <p>Merk: Du kan ikke endre statusen til en ticket direkte. Dette gjøres av supportpersonalet.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="tickets">
+            <div class="faq-question">
+                <h3>Hva er de forskjellige prioritetsnivåene?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>HelpHub bruker tre prioritetsnivåer for tickets:</p>
+                <ul>
+                    <li><strong>Lav</strong>: Problemer som ikke påvirker arbeidet ditt betydelig. Disse vil bli håndtert, men blir ikke nødvendigvis prioritert.</li>
+                    <li><strong>Medium</strong>: Problemer som påvirker produktiviteten din, men har midlertidige løsninger. Disse håndteres innen rimelig tid.</li>
+                    <li><strong>Høy</strong>: Kritiske problemer som påvirker driften din alvorlig. Disse prioriteres og håndteres umiddelbart.</li>
+                </ul>
+                <p>Vennligst velg passende prioritetsnivå når du oppretter tickets for å sikre riktig håndtering.</p>
+            </div>
+        </div>
+        
+        <!-- Account Questions - Updated to Norwegian and changed topics -->
+        <div class="faq-item" data-category="account">
+            <div class="faq-question">
+                <h3>Hvordan registrerer jeg en ny konto?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å registrere en ny konto i HelpHub:</p>
+                <ol>
+                    <li>Gå til HelpHubs hjemmeside</li>
+                    <li>Klikk på "Registrer" i øvre høyre hjørne</li>
+                    <li>Fyll ut registreringsskjemaet med brukernavn, e-postadresse og passord</li>
+                    <li>Les og aksepter vilkårene for bruk</li>
+                    <li>Klikk på "Registrer konto"</li>
+                    <li>Sjekk e-posten din for en bekreftelsesmelding (hvis relevant)</li>
+                </ol>
+                <p>Etter at kontoen din er opprettet, kan du logge inn og begynne å bruke systemet.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="account">
+            <div class="faq-question">
+                <h3>Hvordan logger jeg inn på kontoen min?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>For å logge inn på HelpHub-kontoen din:</p>
+                <ol>
+                    <li>Gå til HelpHubs hjemmeside</li>
+                    <li>Klikk på "Logg inn" i øvre høyre hjørne</li>
+                    <li>Skriv inn e-postadressen og passordet ditt</li>
+                    <li>Klikk på "Logg inn"-knappen</li>
+                </ol>
+                <p>Hvis du har glemt passordet ditt, kan du klikke på "Glemt passord" og følge instruksjonene for å tilbakestille det.</p>
+            </div>
+        </div>
+        
+        <!-- Support Questions -->
+        <div class="faq-item" data-category="support">
+            <div class="faq-question">
+                <h3>Hvor raskt vil ticketen min bli løst?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>Løsningstiden avhenger av flere faktorer:</p>
+                <ul>
+                    <li>Prioriteten på ticketen din</li>
+                    <li>Kompleksiteten til problemet</li>
+                    <li>Nåværende arbeidsmengde for supportpersonalet</li>
+                </ul>
+                <p>Generelt sikter teamet vårt mot:</p>
+                <ul>
+                    <li>Å bekrefte tickets innen 4 timer</li>
+                    <li>Å løse høyprioritets-tickets innen 24 timer</li>
+                    <li>Å løse medium-prioritets-tickets innen 3 arbeidsdager</li>
+                    <li>Å løse lavprioritets-tickets innen 7 arbeidsdager</li>
+                </ul>
+                <p>Dette er generelle retningslinjer, og faktiske løsningstider kan variere.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="support">
+            <div class="faq-question">
+                <h3>Hvordan gir jeg tilbakemelding på supporten jeg mottok?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>Når en ticket er markert som "Løst", vil du bli bedt om å gi tilbakemelding. Du kan:</p>
+                <ol>
+                    <li>Vurdere støtten du mottok på en skala fra 1-5 stjerner</li>
+                    <li>Legge til ytterligere kommentarer om opplevelsen din</li>
+                </ol>
+                <p>Denne tilbakemeldingen hjelper oss med å forbedre supporttjenestene våre og anerkjenne eksepsjonell ytelse fra supportteamet vårt.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item" data-category="support">
+            <div class="faq-question">
+                <h3>Hva hvis jeg ikke er fornøyd med løsningen av ticketen min?</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+                <p>Hvis du ikke er fornøyd med løsningen av ticketen din:</p>
+                <ol>
+                    <li>Legg til en kommentar på ticketen som forklarer hvorfor problemet ikke er løst</li>
+                    <li>Ticketen vil bli gjenåpnet og tildelt til supportpersonalet</li>
+                    <li>For hastesaker, opprett en ny høyprioritets-ticket og henvis til det opprinnelige ticket-nummeret</li>
+                </ol>
+                <p>Vårt mål er å sikre at problemene dine er fullstendig løst, så ikke nøl med å si fra hvis du trenger ytterligere hjelp.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="faq-not-found hidden">
+        <i class="fas fa-search"></i>
+        <p>Ingen spørsmål funnet som matcher søket ditt. Prøv andre søkeord eller sjekk vår <a href="/help">Brukermanual</a> for mer detaljert informasjon.</p>
+    </div>
+    
+    <div class="faq-footer">
+        <p>Fremdeles spørsmål? <a href="/tickets/create">Opprett en ticket</a> og supportteamet vårt vil hjelpe deg.</p>
+    </div>
+</div>
+
+<style>
+    .faq-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .faq-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .faq-header h1 {
+        color: #fff;
+        margin-bottom: 10px;
+    }
+    
+    .faq-intro {
+        color: #aaa;
+        font-size: 1.1rem;
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: 30px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 15px 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: #333;
+        color: #fff;
+        font-size: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #2196F3;
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #777;
+    }
+    
+    .faq-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .category-btn {
+        padding: 8px 15px;
+        background-color: #333;
+        border: none;
+        border-radius: 20px;
+        color: #ccc;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .category-btn:hover {
+        background-color: #444;
+    }
+    
+    .category-btn.active {
+        background-color: #2196F3;
+        color: #fff;
+    }
+    
+    .faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .faq-item {
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .faq-question {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .faq-question:hover {
+        background-color: #333;
+    }
+    
+    .faq-question h3 {
+        margin: 0;
+        color: #fff;
+        font-size: 1.1rem;
+    }
+    
+    .faq-question i {
+        color: #aaa;
+        transition: transform 0.3s;
+    }
+    
+    .faq-item.active .faq-question i {
+        transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        padding: 0 20px;
+    }
+    
+    .faq-item.active .faq-answer {
+        max-height: 1000px;
+        padding-bottom: 20px;
+    }
+    
+    .faq-answer p, .faq-answer ul, .faq-answer ol {
+        color: #ccc;
+        line-height: 1.6;
+    }
+    
+    .faq-answer ul, .faq-answer ol {
+        padding-left: 20px;
+    }
+    
+    .faq-answer li {
+        margin-bottom: 5px;
+    }
+    
+    .faq-not-found {
+        text-align: center;
+        padding: 30px;
+        color: #aaa;
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+    
+    .faq-not-found i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #777;
+    }
+    
+    .faq-not-found a {
+        color: #2196F3;
+        text-decoration: none;
+    }
+    
+    .faq-footer {
+        margin-top: 40px;
+        text-align: center;
+        color: #aaa;
+        padding: 20px;
+        border-top: 1px solid #444;
+    }
+    
+    .faq-footer a {
+        color: #2196F3;
+        text-decoration: none;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .faq-categories {
+            justify-content: center;
+        }
+        
+        .faq-question h3 {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up FAQ accordion functionality
+        const questionElements = document.querySelectorAll('.faq-question');
+        
+        questionElements.forEach(question => {
+            question.addEventListener('click', function() {
+                const faqItem = this.parentElement;
+                
+                // Toggle active class on current item
+                faqItem.classList.toggle('active');
+                
+                // Optional: Close other items when opening one
+                if (faqItem.classList.contains('active')) {
+                    questionElements.forEach(otherQuestion => {
+                        if (otherQuestion !== question) {
+                            otherQuestion.parentElement.classList.remove('active');
+                        }
+                    });
+                }
+            });
+        });
+    });
+    
+    // Search functionality
+    function searchFAQ() {
+        const searchText = document.getElementById('faqSearch').value.toLowerCase();
+        const faqItems = document.querySelectorAll('.faq-item');
+        const notFoundElement = document.querySelector('.faq-not-found');
+        
+        let foundItems = false;
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question h3').textContent.toLowerCase();
+            const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+            
+            if ((question.includes(searchText) || answer.includes(searchText)) && 
+                !item.classList.contains('filtered-out')) {
+                item.style.display = '';
+                foundItems = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show or hide "not found" message
+        if (foundItems) {
+            notFoundElement.classList.add('hidden');
+        } else {
+            notFoundElement.classList.remove('hidden');
+        }
+    }
+    
+    // Filter by category
+    function filterCategory(category) {
+        // Update active button
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Filter items
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            if (category === 'all' || item.dataset.category === category) {
+                item.classList.remove('filtered-out');
+                item.style.display = '';
+            } else {
+                item.classList.add('filtered-out');
+                item.style.display = 'none';
+            }
+        });
+        
+        // Reset search results display
+        document.querySelector('.faq-not-found').classList.add('hidden');
+        
+        // Re-apply search if there's text in the search box
+        const searchInput = document.getElementById('faqSearch');
+        if (searchInput.value.trim() !== '') {
+            searchFAQ();
+        }
+    }
+</script>
+
+<%- include('./partials/footer') %>

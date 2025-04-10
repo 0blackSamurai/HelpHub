@@ -8,6 +8,11 @@ router.get('/', (req, res) => {
     res.render('index', { title: 'Welcome' });
 });
 
+// FAQ page
+router.get('/faq', (req, res) => {
+    res.render('faq', { title: 'Frequently Asked Questions' });
+});
+
 // User management routes (admin only)
 router.get('/users', isAuthenticated, isAdmin, userController.getAllUsers);
 router.put('/users/role', isAuthenticated, isAdmin, userController.updateUserRole);
