@@ -121,13 +121,13 @@
         <nav>
             <ul>
                 <li><a href="/">Home</a></li>
-                <% if (isAuthenticated) { %>
-                    <% if (isAdmin) { %>
+                <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+                    <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
                         <li>
                             <a href="/dashboard">Admin Dashboard</a>
                             <span class="user-role-badge admin-role">Admin</span>
                         </li>
-                    <% } else if (isSupportStaff) { %>
+                    <% } else if (typeof isSupportStaff !== 'undefined' && isSupportStaff) { %>
                         <li>
                             <a href="/tickets/support-dashboard">Support Dashboard</a>
                             <span class="user-role-badge <%= userRole === '1st Line' ? 'support-1st-role' : 'support-2nd-role' %>">

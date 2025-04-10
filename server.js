@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(upload.none()); // Parse multipart/form-data
-app.use(setAuthStatus); // Apply auth status middleware
+app.use(setAuthStatus); // This MUST come before routes to properly set variables
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -57,7 +57,11 @@ app.use((err, req, res, next) => {
   res.status(500).render('error', { 
     title: 'Error',
     message: 'Something went wrong!', 
-    error: process.env.NODE_ENV === 'development' ? err : {} 
+    error: process.env.NODE_ENV === 'development' ? err : {},
+    isAuthenticated: res.locals.isAuthenticated || false,
+    isAdmin: res.locals.isAdmin || false,
+    isSupportStaff: res.locals.isSupportStaff || false,
+    userRole: res.locals.userRole || null
   });
 });
 

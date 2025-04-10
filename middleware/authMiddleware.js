@@ -37,14 +37,17 @@ function isSupportStaff(req, res, next) {
 
 function setAuthStatus(req, res, next) {
     const token = req.cookies.user; // Ensure the cookie name matches
+    
+    // Initialize all required variables to default values
     res.locals.isAuthenticated = false;
     res.locals.isAdmin = false;
-    res.locals.isSupportStaff = false;
+    res.locals.isSupportStaff = false; // This was likely missing
     res.locals.userRole = null;
 
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded; // Also set req.user for route handlers
             res.locals.isAuthenticated = true;
             res.locals.isAdmin = decoded.role === 'Admin';
             res.locals.isSupportStaff = decoded.role === '1st Line' || decoded.role === '2nd Line';
